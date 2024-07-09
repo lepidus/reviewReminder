@@ -1,0 +1,5 @@
+msgid "plugins.generic.reviewReminder.displayName"
+msgstr "Lembrete de Avaliação"
+
+msgid "plugins.generic.reviewReminder.description"
+msgstr "Envia e-mail com lembrete de avaliação para avaliadores designados."

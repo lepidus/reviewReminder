@@ -1,0 +1,5 @@
+msgid "plugins.generic.reviewReminder.displayName"
+msgstr "Recordatorio de Revisión"
+
+msgid "plugins.generic.reviewReminder.description"
+msgstr "Envía un correo electrónico de recordatorio de revisión a los revisores asignados."

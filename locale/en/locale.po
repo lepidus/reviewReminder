@@ -1,0 +1,5 @@
+msgid "plugins.generic.reviewReminder.displayName"
+msgstr "Review Reminder"
+
+msgid "plugins.generic.reviewReminder.description"
+msgstr "Sends a review reminder email to assigned reviewers."
