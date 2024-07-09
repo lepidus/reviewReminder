@@ -15,13 +15,17 @@
 namespace APP\plugins\generic\reviewReminder;
 
 use PKP\plugins\GenericPlugin;
+use PKP\plugins\Hook;
+use PKP\db\DAORegistry;
 
 class ReviewReminderPlugin extends GenericPlugin
 {
     public function register($category, $path, $mainContextId = null)
     {
         $success = parent::register($category, $path, $mainContextId);
-
+        if ($success && $this->getEnabled()) {
+            Hook::add('EditorAction::setDueDates', [$this, 'getReviewMetadata']);
+        }
         return $success;
     }
 
@@ -33,6 +37,13 @@ class ReviewReminderPlugin extends GenericPlugin
     public function getDescription()
     {
         return __('plugins.generic.reviewReminder.description');
+    }
+
+    public function getReviewMetadata($hookName, $args)
+    {
+        $reviewerAssignment = $args[0];
+        $reviewer = $args[1];
+        $reviewDueDate = $args[2];
     }
 
 }
