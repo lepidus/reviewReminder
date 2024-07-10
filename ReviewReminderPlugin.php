@@ -17,6 +17,7 @@ namespace APP\plugins\generic\reviewReminder;
 use PKP\plugins\GenericPlugin;
 use PKP\plugins\Hook;
 use PKP\db\DAORegistry;
+use APP\plugins\generic\reviewReminder\lib\ICS;
 
 class ReviewReminderPlugin extends GenericPlugin
 {
@@ -44,6 +45,13 @@ class ReviewReminderPlugin extends GenericPlugin
         $reviewerAssignment = $args[0];
         $reviewer = $args[1];
         $reviewDueDate = $args[2];
+
+        $ics = new ICS(array(
+            'description' => "Início do período de revisão hoje, 6 de junho de 2024. Término do período de revisão é dia 30 de junho de 2024.",
+            'dtstart' => 'now',
+            'dtend' => $reviewDueDate,
+            'summary' => "Prazo de avaliação"
+        ));
     }
 
 }
