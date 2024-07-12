@@ -16,7 +16,7 @@ namespace APP\plugins\generic\reviewReminder;
 
 use PKP\plugins\GenericPlugin;
 use PKP\plugins\Hook;
-use PKP\db\DAORegistry;
+use APP\facades\Repo;
 use APP\plugins\generic\reviewReminder\lib\ICS;
 use APP\plugins\generic\reviewReminder\classes\ReminderFile;
 use APP\core\Application;
@@ -46,25 +46,26 @@ class ReviewReminderPlugin extends GenericPlugin
 
     public function getReviewMetadata($hookName, $args)
     {
-        $reviewerAssignment = $args[0];
+        $reviewAssignment = $args[0];
         $reviewer = $args[1];
         $reviewDueDate = $args[2];
+        $submission = Repo::submission()->get((int) $reviewAssignment->getSubmissionId());
         $request = Application::get()->getRequest();
         $context = $request->getContext();
 
         $ics = new ICS(array(
-            'description' => "Início do período de revisão hoje, 6 de junho de 2024. Término do período de revisão é dia 30 de junho de 2024.",
+            'description' => __('plugins.generic.reviewReminder.ics.description', ['submissionTitle' => $submission->getLocalizedTitle()]),
             'dtstart' => 'now',
             'dtend' => $reviewDueDate,
-            'summary' => "Prazo de avaliação"
+            'summary' => __('plugins.generic.reviewReminder.displayName')
         ));
 
         $filePath = ReminderFile::create($ics);
         $mailable = new Mailable();
         $mailable->from($context->getData('contactEmail'), $context->getData('contactName'))
             ->to($reviewer->getEmail())
-            ->subject('Review Reminder')
-            ->body("You can add in Calendar")
+            ->subject(__('plugins.generic.reviewReminder.displayName'))
+            ->body(__('plugins.generic.reviewReminder.email.body'))
             ->attach($filePath, ['as' => 'invite.ics']);
 
         Mail::send($mailable);
