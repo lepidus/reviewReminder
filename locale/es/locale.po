@@ -3,3 +3,9 @@ msgstr "Recordatorio de Revisión"
 
 msgid "plugins.generic.reviewReminder.description"
 msgstr "Envía un correo electrónico de recordatorio de revisión a los revisores asignados."
+
+msgid "plugins.generic.reviewReminder.ics.description"
+msgstr "Plazo para la revisión de la sumisión: {$submissionTitle}"
+
+msgid "plugins.generic.reviewReminder.email.body"
+msgstr "Puede utilizar el recordatorio adjunto para añadirlo al calendario de su preferencia."
