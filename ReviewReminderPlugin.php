@@ -19,6 +19,9 @@ use PKP\plugins\Hook;
 use PKP\db\DAORegistry;
 use APP\plugins\generic\reviewReminder\lib\ICS;
 use APP\plugins\generic\reviewReminder\classes\ReminderFile;
+use APP\core\Application;
+use Illuminate\Support\Facades\Mail;
+use PKP\mail\Mailable;
 
 class ReviewReminderPlugin extends GenericPlugin
 {
@@ -46,6 +49,8 @@ class ReviewReminderPlugin extends GenericPlugin
         $reviewerAssignment = $args[0];
         $reviewer = $args[1];
         $reviewDueDate = $args[2];
+        $request = Application::get()->getRequest();
+        $context = $request->getContext();
 
         $ics = new ICS(array(
             'description' => "Início do período de revisão hoje, 6 de junho de 2024. Término do período de revisão é dia 30 de junho de 2024.",
@@ -55,5 +60,13 @@ class ReviewReminderPlugin extends GenericPlugin
         ));
 
         $filePath = ReminderFile::create($ics);
+        $mailable = new Mailable();
+        $mailable->from($context->getData('contactEmail'), $context->getData('contactName'))
+            ->to($reviewer->getEmail())
+            ->subject('Review Reminder')
+            ->body("You can add in Calendar")
+            ->attach($filePath, ['as' => 'invite.ics']);
+
+        Mail::send($mailable);
     }
 }
