@@ -18,6 +18,7 @@ use PKP\plugins\GenericPlugin;
 use PKP\plugins\Hook;
 use PKP\db\DAORegistry;
 use APP\plugins\generic\reviewReminder\lib\ICS;
+use APP\plugins\generic\reviewReminder\classes\ReminderFile;
 
 class ReviewReminderPlugin extends GenericPlugin
 {
@@ -52,6 +53,7 @@ class ReviewReminderPlugin extends GenericPlugin
             'dtend' => $reviewDueDate,
             'summary' => "Prazo de avaliação"
         ));
-    }
 
+        $filePath = ReminderFile::create($ics);
+    }
 }
