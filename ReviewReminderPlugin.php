@@ -17,11 +17,8 @@ namespace APP\plugins\generic\reviewReminder;
 use PKP\plugins\GenericPlugin;
 use PKP\plugins\Hook;
 use APP\facades\Repo;
-use APP\plugins\generic\reviewReminder\lib\ICS;
-use APP\plugins\generic\reviewReminder\classes\ReminderFile;
 use APP\core\Application;
-use Illuminate\Support\Facades\Mail;
-use PKP\mail\Mailable;
+use APP\plugins\generic\reviewReminder\classes\ReviewReminderService;
 
 class ReviewReminderPlugin extends GenericPlugin
 {
@@ -50,24 +47,16 @@ class ReviewReminderPlugin extends GenericPlugin
         $reviewer = $args[1];
         $reviewDueDate = $args[2];
         $submission = Repo::submission()->get((int) $reviewAssignment->getSubmissionId());
-        $request = Application::get()->getRequest();
-        $context = $request->getContext();
+        $context = Application::get()->getRequest()->getContext();
 
-        $ics = new ICS(array(
-            'description' => __('plugins.generic.reviewReminder.ics.description', ['submissionTitle' => $submission->getLocalizedTitle()]),
-            'dtstart' => 'now',
-            'dtend' => $reviewDueDate,
-            'summary' => __('plugins.generic.reviewReminder.displayName')
-        ));
+        $reviewReminderService = new ReviewReminderService(
+            $reviewer->getEmail(),
+            $reviewDueDate,
+            $submission->getLocalizedTitle(),
+            $context->getData('contactEmail'),
+            $context->getData('contactName')
+        );
 
-        $filePath = ReminderFile::create($ics);
-        $mailable = new Mailable();
-        $mailable->from($context->getData('contactEmail'), $context->getData('contactName'))
-            ->to($reviewer->getEmail())
-            ->subject(__('plugins.generic.reviewReminder.displayName'))
-            ->body(__('plugins.generic.reviewReminder.email.body'))
-            ->attach($filePath, ['as' => 'invite.ics']);
-
-        Mail::send($mailable);
+        $reviewReminderService->sendReviewReminder();
     }
 }
