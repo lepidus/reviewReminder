@@ -48,7 +48,10 @@ class ReviewReminderService
             ),
             'dtstart' => 'now',
             'dtend' => $this->reviewDueDate,
-            'summary' => __('plugins.generic.reviewReminder.displayName'),
+            'summary' => __(
+                'plugins.generic.reviewReminder.ics.summary',
+                ['journalName' => $this->journalName]
+            ),
             'organizer' => $this->journalName . ':mailto:' . $this->contactEmail
         ));
 
