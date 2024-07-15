@@ -13,6 +13,12 @@ This plugin sends a reminder to the reviewer's email address when they are assig
 3. Under __Upload file__ select the file __reviewReminder.tar.gz__.
 4. Click __Save__ and the plugin will be installed on your website.
 
+# Credits
+This plugin was sponsored by the South African Medical Association.
+
+Developed by Lepidus Tecnologia.
+
+
 # License
 __This plugin is licensed under the GNU General Public License v3.0__
 
