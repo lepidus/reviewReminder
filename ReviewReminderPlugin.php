@@ -54,7 +54,8 @@ class ReviewReminderPlugin extends GenericPlugin
             $reviewDueDate,
             $submission->getLocalizedTitle(),
             $context->getData('contactEmail'),
-            $context->getData('contactName')
+            $context->getData('contactName'),
+            $context->getLocalizedName()
         );
 
         $reviewReminderService->sendReviewReminder();
