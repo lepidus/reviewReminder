@@ -14,9 +14,9 @@ This plugin sends a reminder to the reviewer's email address when they are assig
 4. Click __Save__ and the plugin will be installed on your website.
 
 # Credits
-This plugin was sponsored by the South African Medical Association.
+This plugin was sponsored by the [South African Medical Association](http://samedical.org/).
 
-Developed by Lepidus Tecnologia.
+Developed by [Lepidus Tecnologia](https://lepidus.com.br/).
 
 
 # License
