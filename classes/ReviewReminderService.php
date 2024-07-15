@@ -14,14 +14,16 @@ class ReviewReminderService
     private $submissionTitle;
     private $contactEmail;
     private $contactName;
+    private $journalName;
 
-    public function __construct(string $reviewerEmail, string $reviewDueDate, string $submissionTitle, string $contactEmail, string $contactName)
+    public function __construct(string $reviewerEmail, string $reviewDueDate, string $submissionTitle, string $contactEmail, string $contactName, string $journalName)
     {
         $this->reviewerEmail = $reviewerEmail;
         $this->reviewDueDate = $reviewDueDate;
         $this->submissionTitle = $submissionTitle;
         $this->contactEmail = $contactEmail;
         $this->contactName = $contactName;
+        $this->journalName = $journalName;
     }
 
     public function sendReviewReminder()
@@ -46,7 +48,11 @@ class ReviewReminderService
             ),
             'dtstart' => 'now',
             'dtend' => $this->reviewDueDate,
-            'summary' => __('plugins.generic.reviewReminder.displayName')
+            'summary' => __(
+                'plugins.generic.reviewReminder.ics.summary',
+                ['journalName' => $this->journalName]
+            ),
+            'organizer' => $this->journalName . ':mailto:' . $this->contactEmail
         ));
 
         return ReminderFile::create($ics);

@@ -81,6 +81,7 @@ class ICS
       'dtstart',
       'location',
       'summary',
+      'organizer',
       'url'
     );
 
@@ -131,7 +132,7 @@ class ICS
 
         // Append properties
         foreach ($props as $k => $v) {
-            $ics_props[] = "$k:$v";
+            $ics_props[] = $k === 'ORGANIZER' ? "$k;CN=$v" : "$k:$v";
         }
 
         // Build ICS properties - add footer
