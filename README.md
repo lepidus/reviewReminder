@@ -1,6 +1,8 @@
 # Review Reminder Plugin 
 
 [![OJS compatibility](https://img.shields.io/badge/ojs-3.4.0.x-brightgreen)](https://github.com/pkp/ojs/tree/stable-3_4_0)
+[![GitHub release](https://img.shields.io/github/v/release/lepidus/reviewReminder?include_prereleases)](https://github.com/lepidus/reviewReminder/releases)
+[![License type](https://img.shields.io/github/license/lepidus/reviewReminder)](https://github.com/lepidus/reviewReminder/blob/main/LICENSE)
 
 This plugin sends a reminder to the reviewer's email address when they are assigned to a submission. The reminder informs them of the review period, which can be added to major digital calendars.
 
