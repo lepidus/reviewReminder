@@ -15,8 +15,9 @@ class ReviewReminderService
     private $contactEmail;
     private $contactName;
     private $journalName;
+    private $submissionReviewUrl;
 
-    public function __construct(string $reviewerEmail, string $reviewDueDate, string $submissionTitle, string $contactEmail, string $contactName, string $journalName)
+    public function __construct(string $reviewerEmail, string $reviewDueDate, string $submissionTitle, string $contactEmail, string $contactName, string $journalName, string $submissionReviewUrl = null)
     {
         $this->reviewerEmail = $reviewerEmail;
         $this->reviewDueDate = $reviewDueDate;
@@ -24,6 +25,7 @@ class ReviewReminderService
         $this->contactEmail = $contactEmail;
         $this->contactName = $contactName;
         $this->journalName = $journalName;
+        $this->submissionReviewUrl = $submissionReviewUrl;
     }
 
     public function sendReviewReminder()
@@ -44,7 +46,10 @@ class ReviewReminderService
         $ics = new ICS(array(
             'description' => __(
                 'plugins.generic.reviewReminder.ics.description',
-                ['submissionTitle' => $this->submissionTitle]
+                [
+                    'submissionTitle' => $this->submissionTitle,
+                    'submissionReviewUrl' => $this->submissionReviewUrl
+                ]
             ),
             'dtstart' => 'now',
             'dtend' => $this->reviewDueDate,
@@ -52,7 +57,8 @@ class ReviewReminderService
                 'plugins.generic.reviewReminder.ics.summary',
                 ['journalName' => $this->journalName]
             ),
-            'organizer' => $this->journalName . ':mailto:' . $this->contactEmail
+            'organizer' => $this->journalName . ':mailto:' . $this->contactEmail,
+            'url' => $this->submissionReviewUrl
         ));
 
         return ReminderFile::create($ics);
