@@ -15,7 +15,7 @@ This plugin sends a reminder to the reviewer's email address when they are assig
 
 ## Configure the One-click Reviewer Access
 
-If it is not already enabled, you can go to `Workflow > Review > Setup` to enable a secure link in the email invitation to reviewers. This will allow the reviewer to receive a direct link to the assigned review
+If it is not already enabled, you can go to `Workflow > Review > Setup` to enable a secure link in the email invitation to reviewers. This will allow the reviewer to receive a direct link to the assigned review.
 
 ![Video Tutorial](https://i.imgur.com/cHjoXsI.gif)
 
