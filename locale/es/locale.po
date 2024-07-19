@@ -7,6 +7,9 @@ msgstr "Envía un correo electrónico de recordatorio de revisión a los revisor
 msgid "plugins.generic.reviewReminder.ics.description"
 msgstr "Plazo para la revisión de {$submissionTitle}: {$submissionReviewUrl}"
 
+msgid "plugins.generic.reviewReminder.ics.description.urlNotAvailable"
+msgstr "URL no disponible"
+
 msgid "plugins.generic.reviewReminder.ics.summary"
 msgstr "{$journalName} - Programar su Revisión"
 

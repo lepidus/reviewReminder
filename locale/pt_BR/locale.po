@@ -7,6 +7,9 @@ msgstr "Envia e-mail com lembrete de avaliação para avaliadores designados."
 msgid "plugins.generic.reviewReminder.ics.description"
 msgstr "Prazo para avaliação de {$submissionTitle}: {$submissionReviewUrl}"
 
+msgid "plugins.generic.reviewReminder.ics.description.urlNotAvailable"
+msgstr "URL não está disponível"
+
 msgid "plugins.generic.reviewReminder.ics.summary"
 msgstr "{$journalName} - Agende sua avaliação"
 

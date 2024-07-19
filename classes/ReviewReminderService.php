@@ -48,7 +48,7 @@ class ReviewReminderService
                 'plugins.generic.reviewReminder.ics.description',
                 [
                     'submissionTitle' => $this->submissionTitle,
-                    'submissionReviewUrl' => $this->submissionReviewUrl
+                    'submissionReviewUrl' => $this->submissionReviewUrl ?? __('plugins.generic.reviewReminder.ics.description.urlNotAvailable')
                 ]
             ),
             'dtstart' => 'now',
