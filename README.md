@@ -13,6 +13,12 @@ This plugin sends a reminder to the reviewer's email address when they are assig
 3. Under __Upload file__ select the file __reviewReminder.tar.gz__.
 4. Click __Save__ and the plugin will be installed on your website.
 
+## Configure the One-click Reviewer Access
+
+If it is not already enabled, you can go to `Workflow > Review > Setup` to enable a secure link in the email invitation to reviewers. This will allow the reviewer to receive a direct link to the assigned review
+
+![Video Tutorial](https://i.imgur.com/cHjoXsI.gif)
+
 # Credits
 This plugin was sponsored by the [South African Medical Association](http://samedical.org/).
 
