@@ -5,7 +5,7 @@ msgid "plugins.generic.reviewReminder.description"
 msgstr "Sends a review reminder email to assigned reviewers."
 
 msgid "plugins.generic.reviewReminder.ics.description"
-msgstr "Deadline for submission review: {$submissionTitle}"
+msgstr "Deadline for review {$submissionTitle}: {$submissionReviewUrl}"
 
 msgid "plugins.generic.reviewReminder.ics.summary"
 msgstr "{$journalName} - Schedule Your Review"

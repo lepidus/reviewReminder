@@ -3,6 +3,7 @@
 namespace APP\plugins\generic\reviewReminder\classes;
 
 use APP\plugins\generic\reviewReminder\lib\ICS;
+use PKP\config\Config;
 
 class ReminderFile
 {
@@ -13,7 +14,8 @@ class ReminderFile
         mkdir($packageDirPath);
         $filePath = $packageDirPath . DIRECTORY_SEPARATOR . 'invite.ics';
         $reviewerReminderCalendarFile = fopen($filePath, 'w');
-        fwrite($reviewerReminderCalendarFile, $ics->to_string());
+        $timeZone = Config::getVar('general', 'time_zone');
+        fwrite($reviewerReminderCalendarFile, $ics->to_string($timeZone));
         fclose($reviewerReminderCalendarFile);
 
         return $filePath;

@@ -103,13 +103,13 @@ class ICS
         }
     }
 
-    public function to_string()
+    public function to_string($timezone)
     {
-        $rows = $this->build_props();
+        $rows = $this->build_props($timezone);
         return implode("\r\n", $rows);
     }
 
-    private function build_props()
+    private function build_props($timezone)
     {
         // Build ICS properties - add header
         $ics_props = array(
@@ -117,6 +117,7 @@ class ICS
           'VERSION:2.0',
           'PRODID:-//hacksw/handcal//NONSGML v1.0//EN',
           'CALSCALE:GREGORIAN',
+          'X-WR-TIMEZONE:' . $timezone,
           'BEGIN:VEVENT'
         );
 
