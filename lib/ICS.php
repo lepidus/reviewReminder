@@ -72,7 +72,7 @@ use DateTime;
 
 class ICS
 {
-    public const DT_FORMAT = 'Ymd\THis\Z';
+    public const DT_FORMAT = 'Ymd\THis';
 
     protected $properties = array();
     private $available_properties = array(
@@ -117,7 +117,10 @@ class ICS
           'VERSION:2.0',
           'PRODID:-//hacksw/handcal//NONSGML v1.0//EN',
           'CALSCALE:GREGORIAN',
-          'X-WR-TIMEZONE:' . $timezone,
+          'BEGIN:VTIMEZONE',
+          'TZID:' . $timezone,
+          'X-LIC-LOCATION:' . $timezone,
+          'END:VTIMEZONE',
           'BEGIN:VEVENT'
         );
 

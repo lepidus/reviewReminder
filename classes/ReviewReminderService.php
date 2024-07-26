@@ -6,6 +6,7 @@ use APP\plugins\generic\reviewReminder\lib\ICS;
 use APP\plugins\generic\reviewReminder\classes\ReminderFile;
 use Illuminate\Support\Facades\Mail;
 use PKP\mail\Mailable;
+use PKP\config\Config;
 
 class ReviewReminderService
 {
@@ -43,6 +44,11 @@ class ReviewReminderService
 
     private function createICalendarFile()
     {
+        $timeZone = new \DateTimeZone(Config::getVar('general', 'time_zone'));
+        $reviewDueDateTime = new \DateTime($this->reviewDueDate, $timeZone);
+        $reviewDueDateTime->setTime(23, 59, 59);
+        $formattedReviewDueDate = $reviewDueDateTime->format('Ymd\THis\Z');
+
         $ics = new ICS(array(
             'description' => __(
                 'plugins.generic.reviewReminder.ics.description',
@@ -52,7 +58,7 @@ class ReviewReminderService
                 ]
             ),
             'dtstart' => 'now',
-            'dtend' => $this->reviewDueDate,
+            'dtend' => $formattedReviewDueDate,
             'summary' => __(
                 'plugins.generic.reviewReminder.ics.summary',
                 ['journalName' => $this->journalName]
