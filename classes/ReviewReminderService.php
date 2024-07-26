@@ -43,6 +43,10 @@ class ReviewReminderService
 
     private function createICalendarFile()
     {
+        $reviewDueDateTime = new \DateTime($this->reviewDueDate);
+        $reviewDueDateTime->setTime(23, 59, 59);
+        $formattedReviewDueDate = $reviewDueDateTime->format('Ymd\THis\Z');
+
         $ics = new ICS(array(
             'description' => __(
                 'plugins.generic.reviewReminder.ics.description',
@@ -52,7 +56,7 @@ class ReviewReminderService
                 ]
             ),
             'dtstart' => 'now',
-            'dtend' => $this->reviewDueDate,
+            'dtend' => $formattedReviewDueDate,
             'summary' => __(
                 'plugins.generic.reviewReminder.ics.summary',
                 ['journalName' => $this->journalName]
