@@ -15,7 +15,7 @@ This plugin sends a reminder to the reviewer's email address when they are assig
 
 ## Time Zone
 
-The time zone of the evaluation deadline is according to the OJS.
+The time zone of the review deadline is according to the OJS.
 This setting is defined in the `config.inc.php` file, in the `time_zone` field.
 
 ## Configure the One-click Reviewer Access
