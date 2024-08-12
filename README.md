@@ -8,7 +8,7 @@ This plugin sends a reminder to the reviewer's email address when they are assig
 
 ## Installation
 
-Install the *Review Reminder Plugin* plugin via the *Plugin Gallery* in `Dashboard > Website > Plugins`.
+Install the *Review Reminder* plugin via the *Plugin Gallery* in `Dashboard > Website > Plugins`.
 
 ## Time Zone
 
