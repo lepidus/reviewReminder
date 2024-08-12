@@ -8,10 +8,7 @@ This plugin sends a reminder to the reviewer's email address when they are assig
 
 ## Installation
 
-1. Enter the administration area of ​​your OJS website through the __Dashboard__.
-2. Navigate to `Settings`>` Website`> `Plugins`> `Upload a new plugin`.
-3. Under __Upload file__ select the file __reviewReminder.tar.gz__.
-4. Click __Save__ and the plugin will be installed on your website.
+Install the *Review Reminder Plugin* plugin via the *Plugin Gallery* in `Dashboard > Website > Plugins`.
 
 ## Time Zone
 
