@@ -12,6 +12,3 @@ msgstr "URL no disponible"
 
 msgid "plugins.generic.reviewReminder.ics.summary"
 msgstr "{$journalName} - Programar su Revisión"
-
-msgid "plugins.generic.reviewReminder.email.body"
-msgstr "Puede utilizar el recordatorio adjunto para añadirlo al calendario de su preferencia."

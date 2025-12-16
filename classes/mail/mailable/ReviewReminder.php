@@ -16,7 +16,7 @@ class ReviewReminder extends Mailable
     protected static ?string $description = 'emails.reviewReminder.description';
     protected static ?string $emailTemplateKey = 'REVIEW_REMINDER';
 
-    public function __construct(Journal $context, Submission $submission, ReviewAssignment $reviewAssignment, array $variables)
+    public function __construct(Journal $context, Submission $submission, ReviewAssignment $reviewAssignment, array $variables = [])
     {
         parent::__construct([$context, $submission, $reviewAssignment]);
         $this->addData($variables);
