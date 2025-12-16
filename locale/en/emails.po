@@ -1,0 +1,19 @@
+msgid "emails.reviewReminder.subject"
+msgstr "Review Reminder"
+
+msgid "emails.reviewReminder.body"
+msgstr ""
+"Dear {$reviewerName},<br>\n"
+"<br>\n"
+"You have a pending review in the journal {$contextName} for the article {$submissionTitle}.<br>\n"
+"<br>\n"
+"The review deadline is {$reviewDueDate}. You can proceed with the review through this link: "
+"<a href=\"{$reviewAssignmentUrl}\">Link to review</a><br>\n"
+"<br>\n"
+"You can also use the attached reminder to add this event to your preferred calendar.<br>\n"
+
+msgid "emails.reviewReminder.name"
+msgstr "Review Reminder"
+
+msgid "emails.reviewReminder.description"
+msgstr "Email template used to notify reviewers of their review assignments"
