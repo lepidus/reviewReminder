@@ -3,7 +3,7 @@
 /**
  * @file plugins/generic/reviewReminder/ReviewReminderPlugin.inc.php
  *
- * Copyright (c) 2024 Lepidus Tecnologia
+ * Copyright (c) 2024 - 2025 Lepidus Tecnologia
  * Distributed under the GNU GPL v3. For full terms see the file LICENSE.
  *
  * @class ReviewReminderPlugin
@@ -38,5 +38,10 @@ class ReviewReminderPlugin extends GenericPlugin
     public function getDescription()
     {
         return __('plugins.generic.reviewReminder.description');
+    }
+
+    public function getInstallEmailTemplatesFile()
+    {
+        return $this->getPluginPath() . DIRECTORY_SEPARATOR . 'emailTemplates.xml';
     }
 }
