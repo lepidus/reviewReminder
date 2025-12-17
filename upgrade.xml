@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE install SYSTEM "../../../lib/pkp/dtd/install.dtd">
 
-<install version="0.0.0.6">
+<install version="0.0.1.0">
     <migration class="APP\plugins\generic\reviewReminder\classes\migrations\UpdateEmailTemplatesMigration" />
 </install>
