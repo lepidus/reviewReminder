@@ -9,14 +9,21 @@ describe('Send Review Reminder', function () {
         cy.get('#skipEmail').click();
         cy.get('[id^="submitFormButton-"]').contains('Add Reviewer').click();
     })
-
     it('Check Email', function () {
         cy.visit('localhost:8025');
-        cy.contains('Ramiro Vaca');
-        cy.contains('agallego@mailinator.com');
-        cy.contains('Review Reminder');
-        cy.contains('You can use the attached reminder to add to the calendar of your choice.');
-        cy.get('.subject > b').contains('Review Reminder').click();
+
+        cy.contains('b', 'Ramiro Vaca');
+        cy.get('b:contains("Review Reminder")').should('have.length', 1);
+        cy.contains('b', 'Review Reminder')
+            .parent().parent().parent()
+            .within((node) => {
+                cy.contains('agallego@mailinator.com');
+            });
+
+        cy.get('b:contains("Review Reminder")').click();
+        cy.get('#nav-tab button:contains("Text")').click();
+
+        cy.contains('You can also use the attached reminder to add this event to your preferred calendar');
         cy.contains('invite.ics');
     })
 });

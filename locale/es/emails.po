@@ -1,0 +1,19 @@
+msgid "emails.reviewReminder.subject"
+msgstr "Recordatorio de Revisión"
+
+msgid "emails.reviewReminder.body"
+msgstr ""
+"Estimado/a {$reviewerName},<br>\n"
+"<br>\n"
+"Tiene una revisión pendiente en la revista {$contextName}, para el artículo {$submissionTitle}.<br>\n"
+"<br>\n"
+"La fecha límite para la revisión es el {$reviewDueDate}. Puede continuar con la revisión a través de este enlace:"
+"<a href=\"{$reviewAssignmentUrl}\">Enlace para la revisión</a><br>\n"
+"<br>\n"
+"También puede utilizar el recordatorio adjunto para añadir este evento al calendario que prefiera.<br>\n"
+
+msgid "emails.reviewReminder.name"
+msgstr "Recordatorio de Revisión"
+
+msgid "emails.reviewReminder.description"
+msgstr "Modelo de correo electrónico utilizado para notificar a los revisores sobre sus asignaciones de revisión"

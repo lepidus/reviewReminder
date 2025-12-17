@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE emails SYSTEM "../../../lib/pkp/dtd/emailTemplates.dtd">
+<!--
+  * emailTemplates.xml
+  *
+  * Copyright (c) 2024 - 2025 Lepidus Tecnologia
+  * Distributed under the GNU GPL v3. For full terms see the file docs/COPYING.
+  *
+  * Email templates XML file.
+    -->
+<emails>
+	<email
+        key="REVIEW_REMINDER"
+        name="emails.reviewReminder.name"
+        description="emails.reviewReminder.description"
+        subject="emails.reviewReminder.subject"
+        body="emails.reviewReminder.body"
+    />
+</emails>

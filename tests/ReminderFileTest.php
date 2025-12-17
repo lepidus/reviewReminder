@@ -15,12 +15,12 @@ class ReminderFileTest extends PKPTestCase
 
     public function testReminderFileCreation(): void
     {
-        $ics = new ICS(array(
+        $ics = new ICS([
             'description' => "Description event mock.",
             'dtstart' => '2024-07-12',
             'dtend' => '2024-07-30',
-            'summary' => "Reviewer Reminer"
-        ));
+            'summary' => "Reviewer Reminder"
+        ]);
         $filePath = ReminderFile::create($ics);
         $this->assertMatchesRegularExpression('/\/tmp\/reviewReminder.+\/invite\.ics/', $filePath);
     }
