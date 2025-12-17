@@ -42,7 +42,7 @@ class ReviewReminderService
             self::EMAIL_TEMPLATE_KEY
         );
         $email = new ReviewReminder($this->context, $this->submission, $this->reviewAssignment);
-        $email->from($this->context->getData('contactEmail'), $this->context->getData('contactEmail'))
+        $email->from($this->context->getData('contactEmail'), $this->context->getData('contactName'))
             ->to([['name' => $this->reviewer->getFullName(), 'email' => $this->reviewer->getEmail()]])
             ->subject($emailTemplate->getLocalizedData('subject'))
             ->body($emailTemplate->getLocalizedData('body'))
