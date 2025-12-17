@@ -17,31 +17,42 @@ class HookCallbacks
         $request = Application::get()->getRequest();
         $context = $request->getContext();
 
+        $oneClickReviewerUrl = $this->getOneClickReviewerUrl(
+            $context,
+            $reviewer->getId(),
+            $reviewAssignment->getId(),
+            $reviewAssignment->getSubmissionId(),
+            $request
+        );
+
         $reviewReminderService = new ReviewReminderService(
             $context,
             $reviewAssignment,
             $reviewer,
-            $reviewDueDate
+            $reviewDueDate,
+            $oneClickReviewerUrl
         );
 
         $reviewReminderService->sendReviewReminder();
     }
 
-    private function getSubmissionReviewUrl($context, $reviewerAccessKeysEnabled, $reviewerId, $reviewAssignmentId, $submissionId, $request)
+    private function getOneClickReviewerUrl($context, $reviewerId, $reviewAssignmentId, $submissionId, $request)
     {
-        if ($reviewerAccessKeysEnabled) {
-            $accessKeyManager = new AccessKeyManager();
-
-            $keyLifetime = ($context->getData('numWeeksPerReview') + 4) * 7;
-            $accessKey = $accessKeyManager->createKey($context->getId(), $reviewerId, $reviewAssignmentId, $keyLifetime);
-
-            $reviewUrlArgs = [
-                'submissionId' => $submissionId,
-                'reviewId' => $reviewAssignmentId,
-                'key' => $accessKey
-            ];
-
-            return Application::get()->getDispatcher()->url($request, Application::ROUTE_PAGE, $context->getPath(), 'reviewer', 'submission', null, $reviewUrlArgs);
+        $reviewerAccessKeysEnabled = $context->getData('reviewerAccessKeysEnabled');
+        if (!$reviewerAccessKeysEnabled) {
+            return null;
         }
+
+        $accessKeyManager = new AccessKeyManager();
+        $keyLifetime = ($context->getData('numWeeksPerReview') + 4) * 7;
+        $accessKey = $accessKeyManager->createKey($context->getId(), $reviewerId, $reviewAssignmentId, $keyLifetime);
+
+        $reviewUrlArgs = [
+            'submissionId' => $submissionId,
+            'reviewId' => $reviewAssignmentId,
+            'key' => $accessKey
+        ];
+
+        return Application::get()->getDispatcher()->url($request, Application::ROUTE_PAGE, $context->getPath(), 'reviewer', 'submission', null, $reviewUrlArgs);
     }
 }
