@@ -15,7 +15,22 @@ describe('Send Review Reminder', function () {
         });
         cy.get('[id^="submitFormButton-"]').contains('Add Reviewer').click();
     })
-    it('Check Email', function () {
+    it('Email should not be sent yet', function () {
+        cy.visit('localhost:8025');
+
+        cy.contains('b', 'Ramiro Vaca');
+        cy.get('b:contains("Review Reminder")').should('not.exist');
+    })
+    it('Reviewer accepts review assignment', function () {
+        cy.login('agallego', null, 'publicknowledge');
+        cy.findSubmission('myQueue', submissionTitle);
+
+        cy.contains('Yes, I agree to have my data collected and stored').parent().within(() => {
+            cy.get('input[type="checkbox"]').check();
+        });
+        cy.contains('button', 'Accept Review, Continue to Step #2').click();
+    });
+    it('Review reminder has been sent', function () {
         cy.visit('localhost:8025');
 
         cy.contains('b', 'Ramiro Vaca');
@@ -31,5 +46,5 @@ describe('Send Review Reminder', function () {
 
         cy.contains('You can also use the attached reminder to add this event to your preferred calendar');
         cy.contains('invite.ics');
-    })
+    });
 });
