@@ -25,7 +25,7 @@ class ReviewReminderPlugin extends GenericPlugin
         $success = parent::register($category, $path, $mainContextId);
         if ($success && $this->getEnabled()) {
             $hookCallbacks = new HookCallbacks();
-            Hook::add('EditorAction::setDueDates', [$hookCallbacks, 'getReviewMetadata']);
+            Hook::add('ReviewerAction::confirmReview', [$hookCallbacks, 'sendReviewReminder']);
         }
         return $success;
     }
