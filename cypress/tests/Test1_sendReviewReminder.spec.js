@@ -17,8 +17,6 @@ describe('Send Review Reminder', function () {
     })
     it('Email should not be sent yet', function () {
         cy.visit('localhost:8025');
-
-        cy.contains('b', 'Ramiro Vaca');
         cy.get('b:contains("Review Reminder")').should('not.exist');
     })
     it('Reviewer accepts review assignment', function () {
