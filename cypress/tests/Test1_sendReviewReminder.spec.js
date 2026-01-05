@@ -1,15 +1,34 @@
+import '../support/commands.js';
+
 describe('Send Review Reminder', function () {
+    let submissionTitle = 'Sodium butyrate improves growth performance of weaned piglets';
+    
     it('Add Reviewer to Submission', function () {
         cy.login('admin', 'admin', 'publicknowledge');
-        cy.get('#archive-button').click();
-        cy.get('#archive > .submissionsListPanel > .listPanel > .listPanel__body > .listPanel__items > .listPanel__itemsList > :nth-child(2) > .listPanel__item--submission > .listPanel__itemSummary > .listPanel__itemActions > .pkpButton').click();
-        cy.get('#ui-id-3').click();
-        cy.get('[id^="component-grid-users-reviewer-reviewergrid-addReviewer-button-"]').click();
-        cy.get(':nth-child(4) > .listPanel__item--reviewer > .listPanel__itemSummary > .listPanel__itemActions > .pkpButton > [aria-hidden="true"]').click();
-        cy.get('#skipEmail').click();
+        cy.findSubmission('active', submissionTitle);
+        cy.contains('a', 'Add Reviewer').click();
+        cy.contains('Adela Gallego').parent().parent().within(() => {
+            cy.contains('Select Reviewer').click();
+        });
+        cy.contains('Do not send email to Reviewer').parent().within(() => {
+            cy.get('input[type="checkbox"]').check();
+        });
         cy.get('[id^="submitFormButton-"]').contains('Add Reviewer').click();
     })
-    it('Check Email', function () {
+    it('Email should not be sent yet', function () {
+        cy.visit('localhost:8025');
+        cy.get('b:contains("Review Reminder")').should('not.exist');
+    })
+    it('Reviewer accepts review assignment', function () {
+        cy.login('agallego', null, 'publicknowledge');
+        cy.findSubmission('myQueue', submissionTitle);
+
+        cy.contains('Yes, I agree to have my data collected and stored').parent().within(() => {
+            cy.get('input[type="checkbox"]').check();
+        });
+        cy.contains('button', 'Accept Review, Continue to Step #2').click();
+    });
+    it('Review reminder has been sent', function () {
         cy.visit('localhost:8025');
 
         cy.contains('b', 'Ramiro Vaca');
@@ -25,5 +44,5 @@ describe('Send Review Reminder', function () {
 
         cy.contains('You can also use the attached reminder to add this event to your preferred calendar');
         cy.contains('invite.ics');
-    })
+    });
 });
