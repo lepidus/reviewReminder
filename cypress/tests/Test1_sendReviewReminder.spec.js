@@ -1,12 +1,18 @@
+import '../support/commands.js';
+
 describe('Send Review Reminder', function () {
+    let submissionTitle = 'Sodium butyrate improves growth performance of weaned piglets';
+    
     it('Add Reviewer to Submission', function () {
         cy.login('admin', 'admin', 'publicknowledge');
-        cy.get('#archive-button').click();
-        cy.get('#archive > .submissionsListPanel > .listPanel > .listPanel__body > .listPanel__items > .listPanel__itemsList > :nth-child(2) > .listPanel__item--submission > .listPanel__itemSummary > .listPanel__itemActions > .pkpButton').click();
-        cy.get('#ui-id-3').click();
-        cy.get('[id^="component-grid-users-reviewer-reviewergrid-addReviewer-button-"]').click();
-        cy.get(':nth-child(4) > .listPanel__item--reviewer > .listPanel__itemSummary > .listPanel__itemActions > .pkpButton > [aria-hidden="true"]').click();
-        cy.get('#skipEmail').click();
+        cy.findSubmission('active', submissionTitle);
+        cy.contains('a', 'Add Reviewer').click();
+        cy.contains('Adela Gallego').parent().parent().within(() => {
+            cy.contains('Select Reviewer').click();
+        });
+        cy.contains('Do not send email to Reviewer').parent().within(() => {
+            cy.get('input[type="checkbox"]').check();
+        });
         cy.get('[id^="submitFormButton-"]').contains('Add Reviewer').click();
     })
     it('Check Email', function () {
