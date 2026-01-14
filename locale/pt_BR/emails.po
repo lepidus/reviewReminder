@@ -17,3 +17,23 @@ msgstr ""
 "<a href=\"{$reviewAssignmentUrl}\">Link para avaliação</a><br>\n"
 "<br>\n"
 "Você também pode utilizar o lembrete em anexo para adicionar esse evento ao calendário de sua preferência.<br>\n"
+
+
+msgid "emails.pendingReviewsReminder.name"
+msgstr "Lembrete de Avaliações Pendentes"
+
+msgid "emails.pendingReviewsReminder.description"
+msgstr "Modelo de e-mail utilizado para notificar avaliadores com uma lista de avaliações pendentes"
+
+msgid "emails.pendingReviewsReminder.subject"
+msgstr "Lembrete de Avaliações Pendentes"
+
+msgid "emails.pendingReviewsReminder.body"
+msgstr ""
+"Prezado(a) {$reviewerName},<br>\n"
+"<br>\n"
+"Os manuscritos abaixo aguardam a sua moderação.<br/>\n"
+"<br>\n"
+"{$submissionsList}<br>\n"
+"<br>\n"
+"Este é um email automático. Caso você já tenha enviado a sua avaliação para estes manuscritos, por favor desconsidere este email."

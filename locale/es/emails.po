@@ -17,3 +17,23 @@ msgstr ""
 "<a href=\"{$reviewAssignmentUrl}\">Enlace para la revisión</a><br>\n"
 "<br>\n"
 "También puede utilizar el recordatorio adjunto para añadir este evento al calendario que prefiera.<br>\n"
+
+
+msgid "emails.pendingReviewsReminder.name"
+msgstr "Recordatorio de Revisiones Pendientes"
+
+msgid "emails.pendingReviewsReminder.description"
+msgstr "Modelo de correo electrónico utilizado para notificar a los revisores con una lista de revisiones pendientes"
+
+msgid "emails.pendingReviewsReminder.subject"
+msgstr "Recordatorio de Revisiones Pendientes"
+
+msgid "emails.pendingReviewsReminder.body"
+msgstr ""
+"Estimado/a {$reviewerName},<br>\n"
+"<br>\n"
+"Los manuscritos abajo están pendientes de su revisión.<br/>\n"
+"<br>\n"
+"{$submissionsList}<br>\n"
+"<br>\n"
+"Este es un correo electrónico automático. Si ya ha enviado su revisión para estos manuscritos, por favor ignore este correo."
