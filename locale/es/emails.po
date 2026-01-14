@@ -1,3 +1,9 @@
+msgid "emails.reviewReminder.name"
+msgstr "Recordatorio de Revisión"
+
+msgid "emails.reviewReminder.description"
+msgstr "Modelo de correo electrónico utilizado para notificar a los revisores sobre sus asignaciones de revisión"
+
 msgid "emails.reviewReminder.subject"
 msgstr "Recordatorio de Revisión"
 
@@ -11,9 +17,3 @@ msgstr ""
 "<a href=\"{$reviewAssignmentUrl}\">Enlace para la revisión</a><br>\n"
 "<br>\n"
 "También puede utilizar el recordatorio adjunto para añadir este evento al calendario que prefiera.<br>\n"
-
-msgid "emails.reviewReminder.name"
-msgstr "Recordatorio de Revisión"
-
-msgid "emails.reviewReminder.description"
-msgstr "Modelo de correo electrónico utilizado para notificar a los revisores sobre sus asignaciones de revisión"

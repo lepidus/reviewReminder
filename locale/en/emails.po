@@ -1,3 +1,9 @@
+msgid "emails.reviewReminder.name"
+msgstr "Review Reminder"
+
+msgid "emails.reviewReminder.description"
+msgstr "Email template used to notify reviewers of their review assignments"
+
 msgid "emails.reviewReminder.subject"
 msgstr "Review Reminder"
 
@@ -11,9 +17,3 @@ msgstr ""
 "<a href=\"{$reviewAssignmentUrl}\">Link to review</a><br>\n"
 "<br>\n"
 "You can also use the attached reminder to add this event to your preferred calendar.<br>\n"
-
-msgid "emails.reviewReminder.name"
-msgstr "Review Reminder"
-
-msgid "emails.reviewReminder.description"
-msgstr "Email template used to notify reviewers of their review assignments"
