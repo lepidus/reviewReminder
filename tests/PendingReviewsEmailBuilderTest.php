@@ -6,22 +6,22 @@ use APP\journal\Journal;
 use PKP\user\User;
 use APP\submission\Submission;
 use APP\publication\Publication;
-use APP\plugins\generic\reviewReminder\classes\PendingReviewsReminderBuilder;
+use APP\plugins\generic\reviewReminder\classes\PendingReviewsEmailBuilder;
 
-class PendingReviewsReminderBuilderTest extends TestCase
+class PendingReviewsEmailBuilderTest extends TestCase
 {
     private $locale = 'en';
     private $context;
     private $reviewer;
     private $submissions;
-    private $pendingReviewsReminderBuilder;
+    private $pendingReviewsEmailBuilder;
 
     public function setUp(): void
     {
         $this->context = $this->createTestContext();
         $this->reviewer = $this->createReviewerUser();
         $this->submissions = $this->createTestSubmissions();
-        $this->pendingReviewsReminderBuilder = new PendingReviewsReminderBuilder(
+        $this->pendingReviewsEmailBuilder = new PendingReviewsEmailBuilder(
             $this->context,
             $this->reviewer,
             $this->submissions,
@@ -35,6 +35,7 @@ class PendingReviewsReminderBuilderTest extends TestCase
         $context->setData('name', 'Example Journal', $this->locale);
         $context->setData('contactName', 'Example contact');
         $context->setData('contactEmail', 'example.contact@gmail.com');
+        $context->setData('urlPath', 'example-journal');
 
         return $context;
     }
@@ -85,5 +86,54 @@ class PendingReviewsReminderBuilderTest extends TestCase
             ['submission' => $firstSubmission, 'reviewDueDate' => $fiveDaysLater],
             ['submission' => $secondSubmission, 'reviewDueDate' => $sixDaysLater],
         ];
+    }
+
+    private function getSubmissionsString(): string
+    {
+        $request = Application::get()->getRequest();
+        $dispatcher = Application::get()->getDispatcher();
+        $request->setDispatcher($dispatcher);
+
+        $submissionsString = '';
+        foreach ($this->submissions as $submissionData) {
+            $submission = $submissionData['submission'];
+            $url = $request->getDispatcher()->url(
+                $request,
+                Application::ROUTE_PAGE,
+                $this->context->getData('urlPath'),
+                'reviewer',
+                'submission',
+                null,
+                [$submission->getId()]
+            );
+
+            $submissionString = "<p><a href=\"$url\">" . $submission->getData('title', $this->locale) . '</a> - '
+                . __('plugins.generic.reviewReminder.reviewDueDate', $this->locale, $submissionData['reviewDueDate']) . '</p>';
+
+            $submissionsString .= $submissionString;
+        }
+
+        return $submissionsString;
+    }
+
+    public function testPendingReviewsEmailBuilding(): void
+    {
+        $email = $this->pendingReviewsEmailBuilder->buildEmail();
+
+        $expectedFrom = ['name' => $this->context->getContactName(), 'address' => $this->context->getContactEmail()];
+        $this->assertEquals($expectedFrom, $email->from[0]);
+
+        $expectedTo = [['name' => $this->reviewer->getFullName(), 'address' => $this->reviewer->getEmail()]];
+        $this->assertEquals($expectedTo, $email->to);
+
+        $expectedSubject = __('emails.pendingReviewsReminder.subject');
+        $this->assertEquals($expectedSubject, $email->subject);
+
+        $bodyParams = [
+            'reviewerName' => $this->reviewer->getFullName(),
+            'submissionsList' => $this->getSubmissionsString()
+        ];
+        $expectedBody = __('emails.pendingReviewsReminder.body', $bodyParams);
+        $this->assertEquals($expectedBody, $email->view);
     }
 }
