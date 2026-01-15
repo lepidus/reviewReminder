@@ -7,6 +7,7 @@ use PKP\user\User;
 use APP\submission\Submission;
 use APP\publication\Publication;
 use APP\plugins\generic\reviewReminder\classes\PendingReviewsEmailBuilder;
+use APP\plugins\generic\reviewReminder\ReviewReminderPlugin;
 
 class PendingReviewsEmailBuilderTest extends TestCase
 {
@@ -27,11 +28,20 @@ class PendingReviewsEmailBuilderTest extends TestCase
             $this->submissions,
             $this->locale
         );
+        $this->initializePluginLocaleData();
+    }
+
+    private function initializePluginLocaleData(): void
+    {
+        $plugin = new ReviewReminderPlugin();
+        $plugin->pluginPath = 'plugins/generic/reviewReminder';
+        $plugin->addLocaleData();
     }
 
     private function createTestContext()
     {
         $context = new Journal();
+        $context->setData('id', 1);
         $context->setData('name', 'Example Journal', $this->locale);
         $context->setData('contactName', 'Example contact');
         $context->setData('contactEmail', 'example.contact@gmail.com');
@@ -108,7 +118,7 @@ class PendingReviewsEmailBuilderTest extends TestCase
             );
 
             $submissionString = "<p><a href=\"$url\">" . $submission->getData('title', $this->locale) . '</a> - '
-                . __('plugins.generic.reviewReminder.reviewDueDate', $this->locale, $submissionData['reviewDueDate']) . '</p>';
+                . __('plugins.generic.reviewReminder.reviewDueDate', ['reviewDueDate' => $submissionData['reviewDueDate']], $this->locale) . '</p>';
 
             $submissionsString .= $submissionString;
         }
@@ -129,11 +139,10 @@ class PendingReviewsEmailBuilderTest extends TestCase
         $expectedSubject = __('emails.pendingReviewsReminder.subject');
         $this->assertEquals($expectedSubject, $email->subject);
 
-        $bodyParams = [
-            'reviewerName' => $this->reviewer->getFullName(),
-            'submissionsList' => $this->getSubmissionsString()
-        ];
-        $expectedBody = __('emails.pendingReviewsReminder.body', $bodyParams);
+        $expectedBody = __('emails.pendingReviewsReminder.body', [], $this->locale);
         $this->assertEquals($expectedBody, $email->view);
+
+        $this->assertEquals($this->reviewer->getFullName(), $email->viewData['reviewerName']);
+        $this->assertEquals($this->getSubmissionsString(), $email->viewData['submissionsList']);
     }
 }
