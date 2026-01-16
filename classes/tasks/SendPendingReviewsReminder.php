@@ -2,16 +2,16 @@
 
 namespace APP\plugins\generic\reviewReminder\classes\tasks;
 
-use APP\core\Application;
 use PKP\scheduledTask\ScheduledTask;
+use APP\core\Application;
 use APP\facades\Repo;
 use PKP\security\Role;
+use Illuminate\Support\Facades\Mail;
 use APP\plugins\generic\reviewReminder\classes\ReviewReminderDAO;
+use APP\plugins\generic\reviewReminder\classes\PendingReviewsEmailBuilder;
 
 class SendModerationReminders extends ScheduledTask
 {
-    private $plugin;
-
     public function executeActions()
     {
         $contextDao = Application::getContextDAO();
@@ -24,9 +24,28 @@ class SendModerationReminders extends ScheduledTask
             foreach ($reviewers as $reviewer) {
                 $reviewerIncompleteReviews = $reviewReminderDao->getIncompleteReviewsByReviewer($reviewer->getId());
 
-                if (count($reviewerIncompleteReviews) > 0) {
-                    // reminder builder
+                if (empty($reviewerIncompleteReviews)) {
+                    continue;
                 }
+
+                $reviewerSubmissions = [];
+                foreach ($reviewerIncompleteReviews as $review) {
+                    $reviewSubmission = Repo::submission()->get($review->getData('submissionId'));
+                    $reviewerSubmissions[] = [
+                        'submission' => $reviewSubmission,
+                        'reviewDueDate' => $review->getData('dateDue')
+                    ];
+                }
+
+                $pendingReviewsEmailBuilder = new PendingReviewsEmailBuilder(
+                    $context,
+                    $reviewer,
+                    $reviewerSubmissions,
+                    $context->getData('primaryLocale')
+                );
+
+                $email = $pendingReviewsEmailBuilder->buildEmail();
+                Mail::send($email);
             }
         }
     }
