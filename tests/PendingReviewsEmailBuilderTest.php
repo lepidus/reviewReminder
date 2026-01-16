@@ -115,13 +115,14 @@ class PendingReviewsEmailBuilderTest extends TestCase
                 'reviewer',
                 'submission',
                 null,
-                [$submission->getId()]
+                ['submissionId' => $submission->getId()]
             );
 
+            $publication = $submission->getCurrentPublication();
             $reviewDueDate = new DateTime($submissionData['reviewDueDate']);
             $reviewDueDate = $reviewDueDate->format($this->context->getLocalizedDateFormatShort($this->locale));
 
-            $submissionString = "<p><a href=\"$url\">" . $submission->getLocalizedData('title', $this->locale) . '</a> - '
+            $submissionString = "<p><a href=\"$url\">" . $publication->getLocalizedData('title', $this->locale) . '</a> - '
                 . __('plugins.generic.reviewReminder.reviewDueDate', ['reviewDueDate' => $reviewDueDate], $this->locale) . '</p>';
 
             $submissionsString .= $submissionString;
