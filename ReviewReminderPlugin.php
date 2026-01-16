@@ -26,6 +26,7 @@ class ReviewReminderPlugin extends GenericPlugin
         if ($success && $this->getEnabled()) {
             $hookCallbacks = new HookCallbacks();
             Hook::add('ReviewerAction::confirmReview', [$hookCallbacks, 'sendReviewReminder']);
+            Hook::add('AcronPlugin::parseCronTab', [$this, 'addTasksToCrontab']);
         }
         return $success;
     }
@@ -43,5 +44,12 @@ class ReviewReminderPlugin extends GenericPlugin
     public function getInstallEmailTemplatesFile()
     {
         return $this->getPluginPath() . DIRECTORY_SEPARATOR . 'emailTemplates.xml';
+    }
+
+    public function addTasksToCrontab($hookName, $params)
+    {
+        $taskFilesPath = &$params[0];
+        $taskFilesPath[] = $this->getPluginPath() . DIRECTORY_SEPARATOR . 'scheduledTasks.xml';
+        return Hook::CONTINUE;
     }
 }

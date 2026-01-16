@@ -1,3 +1,9 @@
+msgid "emails.reviewReminder.name"
+msgstr "Review Reminder"
+
+msgid "emails.reviewReminder.description"
+msgstr "Email template used to notify reviewers of their review assignments"
+
 msgid "emails.reviewReminder.subject"
 msgstr "Review Reminder"
 
@@ -12,8 +18,22 @@ msgstr ""
 "<br>\n"
 "You can also use the attached reminder to add this event to your preferred calendar.<br>\n"
 
-msgid "emails.reviewReminder.name"
-msgstr "Review Reminder"
 
-msgid "emails.reviewReminder.description"
-msgstr "Email template used to notify reviewers of their review assignments"
+msgid "emails.pendingReviewsReminder.name"
+msgstr "Pending Reviews Reminder"
+
+msgid "emails.pendingReviewsReminder.description"
+msgstr "Email template used to notify reviewers with a list of pending reviews"
+
+msgid "emails.pendingReviewsReminder.subject"
+msgstr "Pending Reviews Reminder"
+
+msgid "emails.pendingReviewsReminder.body"
+msgstr ""
+"Dear {$reviewerName},<br>\n"
+"<br>\n"
+"The manuscripts below are awaiting your review.<br/>\n"
+"<br>\n"
+"{$submissionsList}<br>\n"
+"<br>\n"
+"This is an automated email. If you have already submitted your review for these manuscripts, please disregard this email."

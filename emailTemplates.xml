@@ -10,10 +10,17 @@
     -->
 <emails>
 	<email
-        key="REVIEW_REMINDER"
-        name="emails.reviewReminder.name"
-        description="emails.reviewReminder.description"
-        subject="emails.reviewReminder.subject"
-        body="emails.reviewReminder.body"
-    />
+    key="REVIEW_REMINDER"
+    name="emails.reviewReminder.name"
+    description="emails.reviewReminder.description"
+    subject="emails.reviewReminder.subject"
+    body="emails.reviewReminder.body"
+  />
+  <email
+    key="PENDING_REVIEWS_REMINDER"
+    name="emails.pendingReviewsReminder.name"
+    description="emails.pendingReviewsReminder.description"
+    subject="emails.pendingReviewsReminder.subject"
+    body="emails.pendingReviewsReminder.body"
+  />
 </emails>

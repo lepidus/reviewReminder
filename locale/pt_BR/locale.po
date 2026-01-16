@@ -13,3 +13,6 @@ msgstr "URL não está disponível"
 msgid "plugins.generic.reviewReminder.ics.summary"
 msgstr "{$journalName} - Agende sua avaliação"
 
+msgid "plugins.generic.reviewReminder.reviewDueDate"
+msgstr "Data limite: {$reviewDueDate}"
+
