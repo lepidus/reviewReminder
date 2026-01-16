@@ -46,6 +46,7 @@ class PendingReviewsEmailBuilderTest extends TestCase
         $context->setData('contactName', 'Example contact');
         $context->setData('contactEmail', 'example.contact@gmail.com');
         $context->setData('urlPath', 'example-journal');
+        $context->setData('dateFormatShort', 'd/m/Y', $this->locale);
 
         return $context;
     }
@@ -117,8 +118,11 @@ class PendingReviewsEmailBuilderTest extends TestCase
                 [$submission->getId()]
             );
 
-            $submissionString = "<p><a href=\"$url\">" . $submission->getData('title', $this->locale) . '</a> - '
-                . __('plugins.generic.reviewReminder.reviewDueDate', ['reviewDueDate' => $submissionData['reviewDueDate']], $this->locale) . '</p>';
+            $reviewDueDate = new DateTime($submissionData['reviewDueDate']);
+            $reviewDueDate = $reviewDueDate->format($this->context->getLocalizedDateFormatShort($this->locale));
+
+            $submissionString = "<p><a href=\"$url\">" . $submission->getLocalizedData('title', $this->locale) . '</a> - '
+                . __('plugins.generic.reviewReminder.reviewDueDate', ['reviewDueDate' => $reviewDueDate], $this->locale) . '</p>';
 
             $submissionsString .= $submissionString;
         }

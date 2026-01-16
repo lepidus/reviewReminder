@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Mail;
 use APP\plugins\generic\reviewReminder\classes\ReviewReminderDAO;
 use APP\plugins\generic\reviewReminder\classes\PendingReviewsEmailBuilder;
 
-class SendModerationReminders extends ScheduledTask
+class SendPendingReviewsReminder extends ScheduledTask
 {
     public function executeActions()
     {
