@@ -6,7 +6,7 @@
 
 This plugin sends a reminder to the reviewer's email address when they accept to review a submission. The reminder informs them of the review period, which can be added to major digital calendars.
 
-Once a week, the plugin sends an reminder email to all reviewers. This email contains a list of all reviewer's incomplete reviews, with their due dates.
+Once a week, the plugin sends a reminder email to all reviewers. This email contains a list of all reviewer's incomplete reviews, with their due dates.
 
 ## Installation
 
