@@ -5,6 +5,9 @@ on:
 
 name: Create release and tar.gz package for it
 
+permissions:
+  contents: write
+
 jobs:
   create-release:
     name: Create release and package
@@ -47,7 +50,7 @@ jobs:
           draft: false
           prerelease: false
       - name: Upload the package as release asset
-        id: upload-release-asset 
+        id: upload-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
