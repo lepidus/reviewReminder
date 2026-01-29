@@ -3,15 +3,15 @@
 namespace APP\plugins\generic\reviewReminder\classes\migrations;
 
 use Illuminate\Database\Migrations\Migration;
-use PKP\plugins\PluginRegistry;
 use APP\facades\Repo;
+use APP\plugins\generic\reviewReminder\ReviewReminderPlugin;
 
 class UpdateEmailTemplatesMigration extends Migration
 {
     public function up(): void
     {
-        PluginRegistry::loadCategory('generic');
-        $plugin = PluginRegistry::getPlugin('generic', 'reviewreminderplugin');
+        $plugin = new ReviewReminderPlugin();
+        $plugin->pluginPath = 'plugins/generic/reviewReminder';
         $emailLocales = $this->getEmailLocales($plugin);
 
         $plugin->addLocaleData();
