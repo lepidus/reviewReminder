@@ -3,89 +3,103 @@
 namespace APP\plugins\generic\reviewReminder\classes;
 
 use APP\facades\Repo;
-use PKP\db\DAORegistry;
-use APP\core\Application;
-use APP\plugins\generic\reviewReminder\classes\ReviewReminderService;
-use PKP\security\AccessKeyManager;
+use PKP\facades\Locale;
+use PKP\mail\Mailable;
+use PKP\mail\mailables\ReviewRemind;
+use PKP\mail\mailables\ReviewRequest;
+use PKP\mail\mailables\ReviewRequestSubsequent;
+use PKP\mail\variables\ReviewAssignmentEmailVariable;
+use PKP\mail\variables\SubmissionEmailVariable;
+use PKP\plugins\Hook;
+use PKP\submission\reviewAssignment\ReviewAssignment;
 
 class HookCallbacks
 {
-    public function sendReviewReminder($hookName, $args)
+    private ?ReviewAssignment $assignedReview = null;
+
+    public function rememberAssignedReview(string $hookName, array $args): bool
     {
-        $reviewerDeclined = $args[3];
-        if ($reviewerDeclined) {
-            return;
+        $reviewAssignment = $args[0] ?? null;
+        if ($reviewAssignment instanceof ReviewAssignment) {
+            $this->assignedReview = $reviewAssignment;
         }
 
-        $submission = $args[1];
-        $mailable = $args[2];
-        $reviewAssignment = null;
-        foreach ($mailable->getVariables() as $variable) {
-            if (get_class($variable) == 'PKP\mail\variables\ReviewAssignmentEmailVariable') {
-                $values = $variable->values('');
-                $reviewAssignment = $this->getReviewAssignment($submission->getId(), $values['reviewerName']);
-                break;
-            }
-        }
-
-        if (is_null($reviewAssignment)) {
-            return;
-        }
-
-        $reviewer = Repo::user()->get($reviewAssignment->getReviewerId());
-        $reviewDueDate = $reviewAssignment->getDateDue();
-        $request = Application::get()->getRequest();
-        $context = $request->getContext();
-
-        $oneClickReviewerUrl = $this->getOneClickReviewerUrl(
-            $context,
-            $reviewer->getId(),
-            $reviewAssignment->getId(),
-            $reviewAssignment->getSubmissionId(),
-            $request
-        );
-
-        $reviewReminderService = new ReviewReminderService(
-            $context,
-            $reviewAssignment,
-            $reviewer,
-            $reviewDueDate,
-            $oneClickReviewerUrl
-        );
-
-        $reviewReminderService->sendReviewReminder();
+        return Hook::CONTINUE;
     }
 
-    private function getReviewAssignment($submissionId, $reviewerFullName)
+    public function attachCalendarInvite(string $hookName, Mailable $mailable): bool
     {
-        $reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
-        $reviewAssignments = $reviewAssignmentDao->getBySubmissionId($submissionId);
-
-        foreach ($reviewAssignments as $reviewAssignment) {
-            if ($reviewAssignment->getReviewerFullName() == $reviewerFullName) {
-                return $reviewAssignment;
-            }
+        if (
+            !($mailable instanceof ReviewRequest
+                || $mailable instanceof ReviewRequestSubsequent
+                || $mailable instanceof ReviewRemind)
+        ) {
+            return Hook::CONTINUE;
         }
-        return null;
+
+        $reviewAssignment = $this->assignedReview ?? $this->getReviewAssignment($mailable);
+        $this->assignedReview = null;
+        if (!$reviewAssignment) {
+            return Hook::CONTINUE;
+        }
+
+        $submission = Repo::submission()->get($reviewAssignment->getSubmissionId());
+        if (!$submission) {
+            return Hook::CONTINUE;
+        }
+
+        $context = app()->get('context')->get($submission->getData('contextId'));
+        if (!$context) {
+            return Hook::CONTINUE;
+        }
+
+        $reviewUrl = $mailable->viewData[ReviewAssignmentEmailVariable::REVIEW_ASSIGNMENT_URL] ?? null;
+        $reviewReminderService = new ReviewReminderService($context, $reviewAssignment, $reviewUrl);
+
+        $mailable->attachData(
+            $reviewReminderService->getCalendarContents(),
+            'invite.ics',
+            ['mime' => 'text/calendar']
+        );
+        return Hook::CONTINUE;
     }
 
-    private function getOneClickReviewerUrl($context, $reviewerId, $reviewAssignmentId, $submissionId, $request)
+    private function getReviewAssignment(Mailable $mailable): ?ReviewAssignment
     {
-        $reviewerAccessKeysEnabled = $context->getData('reviewerAccessKeysEnabled');
-        if (!$reviewerAccessKeysEnabled) {
+        $submissionId = (int) ($mailable->viewData[SubmissionEmailVariable::SUBMISSION_ID] ?? 0);
+        $reviewerEmail = $mailable->to[0]['address'] ?? null;
+        if (!$submissionId || !$reviewerEmail) {
             return null;
         }
 
-        $accessKeyManager = new AccessKeyManager();
-        $keyLifetime = ($context->getData('numWeeksPerReview') + 4) * 7;
-        $accessKey = $accessKeyManager->createKey($context->getId(), $reviewerId, $reviewAssignmentId, $keyLifetime);
+        $reviewer = Repo::user()->getByEmail($reviewerEmail, true);
+        if (!$reviewer) {
+            return null;
+        }
 
-        $reviewUrlArgs = [
-            'submissionId' => $submissionId,
-            'reviewId' => $reviewAssignmentId,
-            'key' => $accessKey
-        ];
+        $locale = $mailable->getLocale() ?? Locale::getLocale();
+        $expectedValues = array_intersect_key(
+            $mailable->viewData,
+            array_flip([
+                ReviewAssignmentEmailVariable::REVIEW_DUE_DATE,
+                ReviewAssignmentEmailVariable::REVIEW_ROUND,
+                ReviewAssignmentEmailVariable::REVIEWER_NAME,
+            ])
+        );
 
-        return Application::get()->getDispatcher()->url($request, Application::ROUTE_PAGE, $context->getPath(), 'reviewer', 'submission', null, $reviewUrlArgs);
+        $reviewAssignments = Repo::reviewAssignment()
+            ->getCollector()
+            ->filterBySubmissionIds([$submissionId])
+            ->filterByReviewerIds([$reviewer->getId()])
+            ->getMany();
+
+        foreach ($reviewAssignments as $reviewAssignment) {
+            $values = (new ReviewAssignmentEmailVariable($reviewAssignment, $mailable))->values($locale);
+            if ($expectedValues === array_intersect_key($values, $expectedValues)) {
+                return $reviewAssignment;
+            }
+        }
+
+        return null;
     }
 }

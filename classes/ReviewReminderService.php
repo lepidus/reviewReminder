@@ -4,57 +4,37 @@ namespace APP\plugins\generic\reviewReminder\classes;
 
 use APP\facades\Repo;
 use APP\core\Application;
+use APP\journal\Journal;
+use APP\submission\Submission;
 use PKP\config\Config;
-use Illuminate\Support\Facades\Mail;
-use APP\plugins\generic\reviewReminder\classes\mail\mailables\ReviewReminder;
 use APP\plugins\generic\reviewReminder\lib\ICS;
 use APP\plugins\generic\reviewReminder\classes\ReminderFile;
+use PKP\submission\reviewAssignment\ReviewAssignment;
 
 class ReviewReminderService
 {
-    private $context;
-    private $submission;
-    private $reviewAssignment;
-    private $reviewer;
-    private $reviewDueDate;
-    private $oneClickReviewerUrl;
+    private Journal $context;
+    private Submission $submission;
+    private ReviewAssignment $reviewAssignment;
+    private ?string $reviewUrl;
 
-    private const EMAIL_TEMPLATE_KEY = 'REVIEW_REMINDER';
-
-    public function __construct($context, $reviewAssignment, $reviewer, $reviewDueDate, $oneClickReviewerUrl)
+    public function __construct(Journal $context, ReviewAssignment $reviewAssignment, ?string $reviewUrl)
     {
         $this->context = $context;
         $this->submission = Repo::submission()->get((int) $reviewAssignment->getSubmissionId());
         $this->reviewAssignment = $reviewAssignment;
-        $this->reviewer = $reviewer;
-        $this->reviewDueDate = $reviewDueDate;
-        $this->oneClickReviewerUrl = $oneClickReviewerUrl;
+        $this->reviewUrl = $reviewUrl;
     }
 
-    public function sendReviewReminder()
+    public function getCalendarContents(): string
     {
-        $filePath = $this->createICalendarFile();
-        $this->reviewAssignment->setDateDue($this->reviewDueDate);
-        $this->reviewAssignment->setReviewerFullName($this->reviewer->getFullName());
-
-        $emailTemplate = Repo::emailTemplate()->getByKey(
-            $this->context->getId(),
-            self::EMAIL_TEMPLATE_KEY
-        );
-        $email = new ReviewReminder($this->context, $this->submission, $this->reviewAssignment);
-        $email->from($this->context->getData('contactEmail'), $this->context->getData('contactName'))
-            ->to([['name' => $this->reviewer->getFullName(), 'email' => $this->reviewer->getEmail()]])
-            ->subject($emailTemplate->getLocalizedData('subject'))
-            ->body($emailTemplate->getLocalizedData('body'))
-            ->attach($filePath, ['as' => 'invite.ics']);
-
-        Mail::send($email);
+        return ReminderFile::contents($this->createICalendar());
     }
 
-    private function createICalendarFile()
+    private function createICalendar(): ICS
     {
         $timeZone = new \DateTimeZone(Config::getVar('general', 'time_zone'));
-        $reviewDueDateTime = new \DateTime($this->reviewDueDate, $timeZone);
+        $reviewDueDateTime = new \DateTime($this->reviewAssignment->getDateDue(), $timeZone);
         $reviewDueDateTime->setTime(23, 59, 59);
         $formattedReviewDueDate = $reviewDueDateTime->format('Ymd\THis\Z');
 
@@ -62,8 +42,8 @@ class ReviewReminderService
             'description' => __(
                 'plugins.generic.reviewReminder.ics.description',
                 [
-                    'submissionTitle' => $this->submission->getLocalizedTitle(),
-                    'submissionReviewUrl' => $this->oneClickReviewerUrl ?? $this->getReviewUrl()
+                    'submissionTitle' => $this->submission->getCurrentPublication()->getLocalizedTitle(),
+                    'submissionReviewUrl' => $this->reviewUrl ?? $this->getReviewUrl()
                 ]
             ),
             'dtstart' => 'now',
@@ -75,7 +55,7 @@ class ReviewReminderService
             'organizer' => $this->context->getLocalizedName() . ':mailto:' . $this->context->getData('contactEmail'),
         ));
 
-        return ReminderFile::create($ics);
+        return $ics;
     }
 
     private function getReviewUrl()

@@ -7,6 +7,12 @@ use PKP\config\Config;
 
 class ReminderFile
 {
+    public static function contents(ICS $ics): string
+    {
+        $timeZone = Config::getVar('general', 'time_zone');
+        return $ics->to_string($timeZone);
+    }
+
     public static function create(ICS $ics): string
     {
         $packageDirPath = tempnam('/tmp', 'reviewReminder');
@@ -14,8 +20,7 @@ class ReminderFile
         mkdir($packageDirPath);
         $filePath = $packageDirPath . DIRECTORY_SEPARATOR . 'invite.ics';
         $reviewerReminderCalendarFile = fopen($filePath, 'w');
-        $timeZone = Config::getVar('general', 'time_zone');
-        fwrite($reviewerReminderCalendarFile, $ics->to_string($timeZone));
+        fwrite($reviewerReminderCalendarFile, self::contents($ics));
         fclose($reviewerReminderCalendarFile);
 
         return $filePath;

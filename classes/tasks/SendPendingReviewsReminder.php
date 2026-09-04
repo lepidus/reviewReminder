@@ -12,7 +12,7 @@ use APP\plugins\generic\reviewReminder\classes\PendingReviewsEmailBuilder;
 
 class SendPendingReviewsReminder extends ScheduledTask
 {
-    public function executeActions()
+    protected function executeActions(): bool
     {
         $contextDao = Application::getContextDAO();
         $contexts = $contextDao->getAll(true);
@@ -48,6 +48,8 @@ class SendPendingReviewsReminder extends ScheduledTask
                 Mail::send($email);
             }
         }
+
+        return true;
     }
 
     public function getReviewersFromContext($contextId)
