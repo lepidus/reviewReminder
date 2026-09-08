@@ -1,15 +1,17 @@
 <?php
 
-use PHPUnit\Framework\TestCase;
 use APP\core\Application;
 use APP\journal\Journal;
-use PKP\user\User;
-use APP\submission\Submission;
-use APP\publication\Publication;
 use APP\plugins\generic\reviewReminder\classes\PendingReviewsEmailBuilder;
 use APP\plugins\generic\reviewReminder\ReviewReminderPlugin;
+use APP\publication\Publication;
+use APP\submission\Submission;
+use PKP\emailTemplate\EmailTemplate;
+use PKP\emailTemplate\Repository as EmailTemplateRepository;
+use PKP\tests\PKPTestCase;
+use PKP\user\User;
 
-class PendingReviewsEmailBuilderTest extends TestCase
+class PendingReviewsEmailBuilderTest extends PKPTestCase
 {
     private $locale = 'en';
     private $context;
@@ -19,6 +21,9 @@ class PendingReviewsEmailBuilderTest extends TestCase
 
     public function setUp(): void
     {
+        parent::setUp();
+        $this->mockRequest();
+
         $this->context = $this->createTestContext();
         $this->reviewer = $this->createReviewerUser();
         $this->submissions = $this->createTestSubmissions();
@@ -29,6 +34,26 @@ class PendingReviewsEmailBuilderTest extends TestCase
             $this->locale
         );
         $this->initializePluginLocaleData();
+        $this->mockEmailTemplate();
+    }
+
+    protected function getMockedContainerKeys(): array
+    {
+        return [...parent::getMockedContainerKeys(), EmailTemplateRepository::class];
+    }
+
+    private function mockEmailTemplate(): void
+    {
+        $emailTemplate = new EmailTemplate();
+        $emailTemplate->setData('subject', __('emails.pendingReviewsReminder.subject', [], $this->locale), $this->locale);
+        $emailTemplate->setData('body', __('emails.pendingReviewsReminder.body', [], $this->locale), $this->locale);
+
+        $repository = $this->createMock(EmailTemplateRepository::class);
+        $repository->expects($this->once())
+            ->method('getByKey')
+            ->with($this->context->getId(), 'PENDING_REVIEWS_REMINDER')
+            ->willReturn($emailTemplate);
+        app()->instance(EmailTemplateRepository::class, $repository);
     }
 
     private function initializePluginLocaleData(): void
@@ -122,7 +147,7 @@ class PendingReviewsEmailBuilderTest extends TestCase
             $reviewDueDate = new DateTime($submissionData['reviewDueDate']);
             $reviewDueDate = $reviewDueDate->format($this->context->getLocalizedDateFormatShort($this->locale));
 
-            $submissionString = "<p><a href=\"$url\">" . $publication->getLocalizedData('title', $this->locale) . '</a> - '
+            $submissionString = "<p><a href=\"{$url}\">" . $publication->getLocalizedData('title', $this->locale) . '</a> - '
                 . __('plugins.generic.reviewReminder.reviewDueDate', ['reviewDueDate' => $reviewDueDate], $this->locale) . '</p>';
 
             $submissionsString .= $submissionString;
@@ -141,7 +166,7 @@ class PendingReviewsEmailBuilderTest extends TestCase
         $expectedTo = [['name' => $this->reviewer->getFullName(), 'address' => $this->reviewer->getEmail()]];
         $this->assertEquals($expectedTo, $email->to);
 
-        $expectedSubject = __('emails.pendingReviewsReminder.subject');
+        $expectedSubject = __('emails.pendingReviewsReminder.subject', [], $this->locale);
         $this->assertEquals($expectedSubject, $email->subject);
 
         $expectedBody = __('emails.pendingReviewsReminder.body', [], $this->locale);
