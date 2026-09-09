@@ -2,9 +2,9 @@
 
 namespace APP\plugins\generic\reviewReminder\classes\migrations;
 
-use Illuminate\Database\Migrations\Migration;
 use APP\facades\Repo;
 use APP\plugins\generic\reviewReminder\ReviewReminderPlugin;
+use Illuminate\Database\Migrations\Migration;
 
 class UpdateEmailTemplatesMigration extends Migration
 {

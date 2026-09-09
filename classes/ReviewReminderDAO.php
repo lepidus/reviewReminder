@@ -2,9 +2,9 @@
 
 namespace APP\plugins\generic\reviewReminder\classes;
 
+use Illuminate\Support\Facades\DB;
 use PKP\db\DAO;
 use PKP\db\DAORegistry;
-use Illuminate\Support\Facades\DB;
 
 class ReviewReminderDAO extends DAO
 {

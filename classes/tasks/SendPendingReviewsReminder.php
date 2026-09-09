@@ -2,17 +2,17 @@
 
 namespace APP\plugins\generic\reviewReminder\classes\tasks;
 
-use PKP\scheduledTask\ScheduledTask;
 use APP\core\Application;
 use APP\facades\Repo;
-use PKP\security\Role;
-use Illuminate\Support\Facades\Mail;
-use APP\plugins\generic\reviewReminder\classes\ReviewReminderDAO;
 use APP\plugins\generic\reviewReminder\classes\PendingReviewsEmailBuilder;
+use APP\plugins\generic\reviewReminder\classes\ReviewReminderDAO;
+use Illuminate\Support\Facades\Mail;
+use PKP\scheduledTask\ScheduledTask;
+use PKP\security\Role;
 
 class SendPendingReviewsReminder extends ScheduledTask
 {
-    public function executeActions()
+    protected function executeActions(): bool
     {
         $contextDao = Application::getContextDAO();
         $contexts = $contextDao->getAll(true);
@@ -48,6 +48,8 @@ class SendPendingReviewsReminder extends ScheduledTask
                 Mail::send($email);
             }
         }
+
+        return true;
     }
 
     public function getReviewersFromContext($contextId)
