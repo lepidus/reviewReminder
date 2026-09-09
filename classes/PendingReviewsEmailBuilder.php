@@ -2,11 +2,10 @@
 
 namespace APP\plugins\generic\reviewReminder\classes;
 
-use DateTime;
 use APP\core\Application;
 use APP\facades\Repo;
 use APP\plugins\generic\reviewReminder\classes\mail\mailables\PendingReviewsReminder;
-
+use DateTime;
 
 class PendingReviewsEmailBuilder
 {
@@ -67,7 +66,7 @@ class PendingReviewsEmailBuilder
             $reviewDueDate = new DateTime($submissionData['reviewDueDate']);
             $reviewDueDate = $reviewDueDate->format($this->context->getLocalizedDateFormatShort($this->locale));
 
-            $submissionString = "<p><a href=\"$url\">" . $publication->getLocalizedData('title', $this->locale) . '</a> - '
+            $submissionString = "<p><a href=\"{$url}\">" . $publication->getLocalizedData('title', $this->locale) . '</a> - '
                 . __('plugins.generic.reviewReminder.reviewDueDate', ['reviewDueDate' => $reviewDueDate], $this->locale) . '</p>';
 
             $submissionsString .= $submissionString;

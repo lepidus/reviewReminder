@@ -2,8 +2,8 @@
 
 namespace APP\plugins\generic\reviewReminder\classes\mail\mailables;
 
-use PKP\mail\Mailable;
 use APP\journal\Journal;
+use PKP\mail\Mailable;
 use PKP\mail\traits\Configurable;
 
 class PendingReviewsReminder extends Mailable

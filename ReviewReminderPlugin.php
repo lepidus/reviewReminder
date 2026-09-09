@@ -7,6 +7,7 @@
  * Distributed under the GNU GPL v3. For full terms see the file LICENSE.
  *
  * @class ReviewReminderPlugin
+ *
  * @ingroup plugins_generic_reviewReminder
  *
  * @brief Plugin for sending review reminder emails to designated reviewers
@@ -14,10 +15,10 @@
 
 namespace APP\plugins\generic\reviewReminder;
 
-use PKP\plugins\GenericPlugin;
-use PKP\plugins\Hook;
 use APP\plugins\generic\reviewReminder\classes\HookCallbacks;
 use APP\plugins\generic\reviewReminder\classes\tasks\SendPendingReviewsReminder;
+use PKP\plugins\GenericPlugin;
+use PKP\plugins\Hook;
 use PKP\plugins\interfaces\HasTaskScheduler;
 use PKP\scheduledTask\PKPScheduler;
 

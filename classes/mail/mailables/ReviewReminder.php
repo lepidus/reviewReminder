@@ -2,11 +2,11 @@
 
 namespace APP\plugins\generic\reviewReminder\classes\mail\mailables;
 
-use PKP\mail\Mailable;
 use APP\journal\Journal;
 use APP\submission\Submission;
-use PKP\submission\reviewAssignment\ReviewAssignment;
+use PKP\mail\Mailable;
 use PKP\mail\traits\Configurable;
+use PKP\submission\reviewAssignment\ReviewAssignment;
 
 class ReviewReminder extends Mailable
 {

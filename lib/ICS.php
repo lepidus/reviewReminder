@@ -74,16 +74,16 @@ class ICS
 {
     public const DT_FORMAT = 'Ymd\THis';
 
-    protected $properties = array();
-    private $available_properties = array(
-      'description',
-      'dtend',
-      'dtstart',
-      'location',
-      'summary',
-      'organizer',
-      'url'
-    );
+    protected $properties = [];
+    private $available_properties = [
+        'description',
+        'dtend',
+        'dtstart',
+        'location',
+        'summary',
+        'organizer',
+        'url'
+    ];
 
     public function __construct($props)
     {
@@ -112,21 +112,21 @@ class ICS
     private function build_props($timezone)
     {
         // Build ICS properties - add header
-        $ics_props = array(
-          'BEGIN:VCALENDAR',
-          'VERSION:2.0',
-          'PRODID:-//hacksw/handcal//NONSGML v1.0//EN',
-          'CALSCALE:GREGORIAN',
-          'BEGIN:VTIMEZONE',
-          'TZID:' . $timezone,
-          'X-LIC-LOCATION:' . $timezone,
-          'END:VTIMEZONE',
-          'BEGIN:VEVENT'
-        );
+        $ics_props = [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'PRODID:-//hacksw/handcal//NONSGML v1.0//EN',
+            'CALSCALE:GREGORIAN',
+            'BEGIN:VTIMEZONE',
+            'TZID:' . $timezone,
+            'X-LIC-LOCATION:' . $timezone,
+            'END:VTIMEZONE',
+            'BEGIN:VEVENT'
+        ];
 
         // Build ICS properties - add header
-        $props = array();
-        foreach($this->properties as $k => $v) {
+        $props = [];
+        foreach ($this->properties as $k => $v) {
             $props[strtoupper($k . ($k === 'url' ? ';VALUE=URI' : ''))] = $v;
         }
 
@@ -136,7 +136,7 @@ class ICS
 
         // Append properties
         foreach ($props as $k => $v) {
-            $ics_props[] = $k === 'ORGANIZER' ? "$k;CN=$v" : "$k:$v";
+            $ics_props[] = $k === 'ORGANIZER' ? "{$k};CN={$v}" : "{$k}:{$v}";
         }
 
         // Build ICS properties - add footer
@@ -148,7 +148,7 @@ class ICS
 
     private function sanitize_val($val, $key = false)
     {
-        switch($key) {
+        switch ($key) {
             case 'dtend':
             case 'dtstamp':
             case 'dtstart':

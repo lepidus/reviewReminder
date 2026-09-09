@@ -2,13 +2,12 @@
 
 namespace APP\plugins\generic\reviewReminder\classes;
 
-use APP\facades\Repo;
 use APP\core\Application;
+use APP\facades\Repo;
 use APP\journal\Journal;
+use APP\plugins\generic\reviewReminder\lib\ICS;
 use APP\submission\Submission;
 use PKP\config\Config;
-use APP\plugins\generic\reviewReminder\lib\ICS;
-use APP\plugins\generic\reviewReminder\classes\ReminderFile;
 use PKP\submission\reviewAssignment\ReviewAssignment;
 
 class ReviewReminderService
@@ -38,7 +37,7 @@ class ReviewReminderService
         $reviewDueDateTime->setTime(23, 59, 59);
         $formattedReviewDueDate = $reviewDueDateTime->format('Ymd\THis\Z');
 
-        $ics = new ICS(array(
+        $ics = new ICS([
             'description' => __(
                 'plugins.generic.reviewReminder.ics.description',
                 [
@@ -55,7 +54,7 @@ class ReviewReminderService
                 ['journalName' => $this->context->getLocalizedName()]
             ),
             'organizer' => $this->context->getLocalizedName() . ':mailto:' . $this->context->getData('contactEmail'),
-        ));
+        ]);
 
         return $ics;
     }
@@ -63,8 +62,8 @@ class ReviewReminderService
     private function escapeICalendarTitle(string $title): string
     {
         return str_replace(
-            ["\\", "\r\n", "\r", "\n"],
-            ["\\\\", "\\n", "\\n", "\\n"],
+            ['\\', "\r\n", "\r", "\n"],
+            ['\\\\', '\\n', '\\n', '\\n'],
             $title
         );
     }

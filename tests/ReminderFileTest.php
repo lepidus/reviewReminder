@@ -2,9 +2,9 @@
 
 namespace APP\plugins\generic\reviewReminder\tests;
 
-use PKP\tests\PKPTestCase;
 use APP\plugins\generic\reviewReminder\classes\ReminderFile;
 use APP\plugins\generic\reviewReminder\lib\ICS;
+use PKP\tests\PKPTestCase;
 
 class ReminderFileTest extends PKPTestCase
 {
@@ -16,10 +16,10 @@ class ReminderFileTest extends PKPTestCase
     public function testReminderFileCreation(): void
     {
         $ics = new ICS([
-            'description' => "Description event mock.",
+            'description' => 'Description event mock.',
             'dtstart' => '2024-07-12',
             'dtend' => '2024-07-30',
-            'summary' => "Reviewer Reminder"
+            'summary' => 'Reviewer Reminder'
         ]);
         $filePath = ReminderFile::create($ics);
         $this->assertMatchesRegularExpression('/\/tmp\/reviewReminder.+\/invite\.ics/', $filePath);
@@ -38,6 +38,6 @@ class ReminderFileTest extends PKPTestCase
 
         $this->assertStringContainsString("BEGIN:VCALENDAR\r\n", $contents);
         $this->assertStringContainsString("SUMMARY:Reviewer Reminder\r\n", $contents);
-        $this->assertStringContainsString("END:VCALENDAR", $contents);
+        $this->assertStringContainsString('END:VCALENDAR', $contents);
     }
 }
