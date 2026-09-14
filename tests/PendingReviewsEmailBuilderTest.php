@@ -136,7 +136,7 @@ class PendingReviewsEmailBuilderTest extends PKPTestCase
             $url = $request->getDispatcher()->url(
                 $request,
                 Application::ROUTE_PAGE,
-                $this->context->getData('urlPath'),
+                $this->context->getPath(),
                 'reviewer',
                 'submission',
                 null,
@@ -147,7 +147,7 @@ class PendingReviewsEmailBuilderTest extends PKPTestCase
             $reviewDueDate = new DateTime($submissionData['reviewDueDate']);
             $reviewDueDate = $reviewDueDate->format($this->context->getLocalizedDateFormatShort($this->locale));
 
-            $submissionString = "<p><a href=\"{$url}\">" . $publication->getLocalizedData('title', $this->locale) . '</a> - '
+            $submissionString = "<p><a href=\"{$url}\">" . $publication->getData('title', $this->locale) . '</a> - '
                 . __('plugins.generic.reviewReminder.reviewDueDate', ['reviewDueDate' => $reviewDueDate], $this->locale) . '</p>';
 
             $submissionsString .= $submissionString;
@@ -171,6 +171,7 @@ class PendingReviewsEmailBuilderTest extends PKPTestCase
 
         $expectedBody = __('emails.pendingReviewsReminder.body', [], $this->locale);
         $this->assertEquals($expectedBody, $email->view);
+        $this->assertEquals($this->locale, $email->getLocale());
 
         $this->assertEquals($this->reviewer->getFullName(), $email->viewData['reviewerName']);
         $this->assertEquals($this->getSubmissionsString(), $email->viewData['submissionsList']);

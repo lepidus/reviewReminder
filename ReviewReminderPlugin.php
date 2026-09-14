@@ -53,7 +53,7 @@ class ReviewReminderPlugin extends GenericPlugin implements HasTaskScheduler
     public function registerSchedules(PKPScheduler $scheduler): void
     {
         $scheduler
-            ->addSchedule(new SendPendingReviewsReminder())
+            ->addSchedule(new SendPendingReviewsReminder($this))
             ->weeklyOn(1)
             ->name(SendPendingReviewsReminder::class)
             ->withoutOverlapping();
