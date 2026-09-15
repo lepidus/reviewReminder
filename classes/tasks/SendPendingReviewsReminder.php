@@ -9,6 +9,7 @@ use APP\plugins\generic\reviewReminder\classes\ReviewReminderDAO;
 use APP\plugins\generic\reviewReminder\ReviewReminderPlugin;
 use Illuminate\Support\Facades\Mail;
 use PKP\scheduledTask\ScheduledTask;
+use PKP\security\Role;
 use PKP\submission\PKPSubmission;
 
 class SendPendingReviewsReminder extends ScheduledTask
@@ -50,7 +51,18 @@ class SendPendingReviewsReminder extends ScheduledTask
                 ];
             }
 
+            $activeReviewerIds = Repo::user()->getCollector()
+                ->filterByContextIds([$context->getId()])
+                ->filterByRoleIds([Role::ROLE_ID_REVIEWER])
+                ->filterByUserIds(array_keys($pendingReviewsByReviewer))
+                ->getIds()
+                ->all();
+
             foreach ($pendingReviewsByReviewer as $reviewerId => $reviewerSubmissions) {
+                if (!in_array($reviewerId, $activeReviewerIds)) {
+                    continue;
+                }
+
                 $reviewer = Repo::user()->get($reviewerId);
                 if (!$reviewer) {
                     continue;
