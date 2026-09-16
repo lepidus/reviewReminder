@@ -51,12 +51,7 @@ class SendPendingReviewsReminder extends ScheduledTask
                 ];
             }
 
-            $activeReviewerIds = Repo::user()->getCollector()
-                ->filterByContextIds([$context->getId()])
-                ->filterByRoleIds([Role::ROLE_ID_REVIEWER])
-                ->filterByUserIds(array_keys($pendingReviewsByReviewer))
-                ->getIds()
-                ->all();
+            $activeReviewerIds = $this->getActiveReviewersIds($context->getId());
 
             foreach ($pendingReviewsByReviewer as $reviewerId => $reviewerSubmissions) {
                 if (!in_array($reviewerId, $activeReviewerIds)) {
@@ -81,5 +76,17 @@ class SendPendingReviewsReminder extends ScheduledTask
         }
 
         return true;
+    }
+
+    public function getActiveReviewersIds(int $contextId): array
+    {
+        $userCollector = Repo::user()->getCollector();
+        $activeReviewerIds = $userCollector
+            ->filterByContextIds([$contextId])
+            ->filterByRoleIds([Role::ROLE_ID_REVIEWER])
+            ->filterByStatus($userCollector::STATUS_ACTIVE)
+            ->getIds()
+            ->toArray();
+        return $activeReviewerIds;
     }
 }
