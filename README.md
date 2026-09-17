@@ -1,5 +1,10 @@
 # Review Reminder Plugin
 
+Other languages:
+
+- [Português do Brasil](README.pt_BR.md)
+- [Español](README.es.md)
+
 [![OJS compatibility](https://img.shields.io/badge/OJS-3.5.0.x-brightgreen)](https://github.com/pkp/ojs/tree/stable-3_5_0)
 [![GitHub release](https://img.shields.io/github/v/release/lepidus/reviewReminder)](https://github.com/lepidus/reviewReminder/releases)
 [![License type](https://img.shields.io/github/license/lepidus/reviewReminder)](https://github.com/lepidus/reviewReminder/blob/main/LICENSE)
@@ -45,14 +50,6 @@ Eligible reviews are those for which the reviewer has been notified, in the late
 
 The list includes both overdue reviews and reviews whose deadlines are still in the future. Sending is weekly; it is not triggered a fixed number of days before an invitation or review deadline. The weekly email uses the `PENDING_REVIEWS_REMINDER` template and does not include a calendar attachment.
 
-### Scheduled tasks and cron
-
-The plugin registers one weekly task with the **OJS 3.5 task scheduler**, scheduled for Mondays. It does not install a separate operating-system cron job.
-
-The OJS scheduler must be running for weekly emails to be sent. OJS can run scheduled tasks through its built-in task runner (`[schedule] task_runner` in `config.inc.php`) or through a server cron job invoking the OJS scheduler. The built-in runner depends on web requests, so execution can be delayed when there is no site traffic.
-
-If the server already runs the OJS scheduler, no additional cron entry is needed for this plugin. Server administrators can consult the scheduled-task settings in OJS's `config.inc.php` for their installation. Attaching a calendar file to an invitation or manual reminder does not depend on the weekly task.
-
 ## Relationship to OJS reminders
 
 OJS has its own automatic reminders for overdue invitation responses and overdue reviews. Their settings and sending remain controlled by OJS. This plugin adds the weekly summary independently, so a reviewer may receive both an OJS automatic reminder and a plugin weekly email.
@@ -70,6 +67,14 @@ The plugin's calendar attachment applies to invitations and **manual** review re
 4. Ensure that OJS email delivery works and that its task scheduler is running if you want weekly reminders.
 
 In an installation hosting multiple journals, enable the plugin separately in each journal that needs it. Enabling the plugin activates both features; it has no separate settings to enable only calendar attachments or only weekly emails.
+
+## Configure the One-click Reviewer Access
+
+To let reviewers access their assigned reviews through a secure link in the OJS invitation email, go to **Workflow > Review > Setup** and enable **One-click Reviewer Access**, if it is not already enabled.
+
+This setting is optional. The plugin can attach calendar events and send weekly reminders without it. Enabling it does not make every link in calendar attachments or weekly reminders a one-click access link; regular review-page links may still require signing in.
+
+![Tutorial showing how to enable One-click Reviewer Access](https://i.imgur.com/cHjoXsI.gif)
 
 ## What happens if the plugin is disabled?
 
