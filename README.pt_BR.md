@@ -50,6 +50,14 @@ São elegíveis as avaliações para as quais o avaliador já foi notificado, na
 
 A lista inclui tanto avaliações atrasadas quanto aquelas cujos prazos ainda não venceram. O envio é semanal; ele não é acionado um número fixo de dias antes do prazo do convite ou da avaliação. O email semanal usa o modelo `PENDING_REVIEWS_REMINDER` e não inclui um anexo de calendário.
 
+### Tarefas agendadas e cron
+
+O plugin registra uma tarefa semanal no **agendador de tarefas do OJS 3.5**, programada para as segundas-feiras. Ele não instala uma tarefa cron separada no sistema operacional.
+
+O agendador do OJS precisa estar em execução para que os emails semanais sejam enviados. O OJS pode executar tarefas agendadas por meio de seu executor integrado ou de uma tarefa cron no servidor que invoque o agendador do OJS. O executor integrado depende de requisições web, por isso a execução pode atrasar quando não há acessos ao site.
+
+Se o servidor já executa o agendador do OJS, não é necessário adicionar uma entrada cron para este plugin.
+
 ## Relação com os lembretes do OJS
 
 O OJS possui seus próprios lembretes automáticos para respostas a convites e avaliações em atraso. As configurações e o envio desses lembretes continuam sob o controle do OJS. Este plugin adiciona o resumo semanal de forma independente, de modo que um avaliador pode receber tanto um lembrete automático do OJS quanto um email semanal do plugin.

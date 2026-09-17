@@ -50,6 +50,14 @@ Se incluyen las revisiones para las que ya se ha notificado al revisor, en la ro
 
 La lista incluye tanto las revisiones atrasadas como aquellas cuyos plazos aún no han vencido. El envío es semanal; no se activa un número fijo de días antes del plazo de la invitación o de la revisión. El correo semanal utiliza la plantilla `PENDING_REVIEWS_REMINDER` y no incluye un archivo adjunto de calendario.
 
+### Tareas programadas y cron
+
+El plugin registra una tarea semanal en el **programador de tareas de OJS 3.5**, programada para los lunes. No instala una tarea cron separada en el sistema operativo.
+
+El programador de OJS debe estar en funcionamiento para que se envíen los correos semanales. OJS puede ejecutar tareas programadas mediante su ejecutor integrado o mediante una tarea cron del servidor que invoque el programador de OJS. El ejecutor integrado depende de las solicitudes web, por lo que la ejecución puede retrasarse cuando no hay tráfico en el sitio.
+
+Si el servidor ya ejecuta el programador de OJS, no se necesita una entrada cron adicional para este plugin.
+
 ## Relación con los recordatorios de OJS
 
 OJS tiene sus propios recordatorios automáticos para las respuestas a invitaciones y las revisiones atrasadas. Su configuración y envío siguen bajo el control de OJS. Este plugin añade el resumen semanal de forma independiente, por lo que un revisor puede recibir tanto un recordatorio automático de OJS como un correo semanal del plugin.
