@@ -6,12 +6,19 @@ use APP\core\Application;
 use APP\facades\Repo;
 use APP\plugins\generic\reviewReminder\classes\PendingReviewsEmailBuilder;
 use APP\plugins\generic\reviewReminder\classes\ReviewReminderDAO;
+use APP\plugins\generic\reviewReminder\ReviewReminderPlugin;
 use Illuminate\Support\Facades\Mail;
 use PKP\scheduledTask\ScheduledTask;
 use PKP\security\Role;
+use PKP\submission\PKPSubmission;
 
 class SendPendingReviewsReminder extends ScheduledTask
 {
+    public function __construct(private ReviewReminderPlugin $plugin, array $args = [])
+    {
+        parent::__construct($args);
+    }
+
     protected function executeActions(): bool
     {
         $contextDao = Application::getContextDAO();
@@ -19,29 +26,48 @@ class SendPendingReviewsReminder extends ScheduledTask
         $reviewReminderDao = new ReviewReminderDAO();
 
         while ($context = $contexts->next()) {
-            $reviewers = $this->getReviewersFromContext($context->getId());
+            if (!$this->plugin->getEnabled($context->getId())) {
+                continue;
+            }
 
-            foreach ($reviewers as $reviewer) {
-                $reviewerIncompleteReviews = $reviewReminderDao->getIncompleteReviewsByReviewer($reviewer->getId());
+            $submissions = [];
+            $pendingReviewsByReviewer = [];
+            $incompleteReviews = $reviewReminderDao->getIncompleteReviewsByContext($context->getId());
 
-                if (empty($reviewerIncompleteReviews)) {
+            foreach ($incompleteReviews as $reviewAssignment) {
+                $submissionId = $reviewAssignment->getSubmissionId();
+                if (!array_key_exists($submissionId, $submissions)) {
+                    $submissions[$submissionId] = Repo::submission()->get($submissionId);
+                }
+
+                $submission = $submissions[$submissionId];
+                if (!$submission || $submission->getData('status') !== PKPSubmission::STATUS_QUEUED) {
                     continue;
                 }
 
-                $reviewerSubmissions = [];
-                foreach ($reviewerIncompleteReviews as $review) {
-                    $reviewSubmission = Repo::submission()->get($review->getData('submissionId'));
-                    $reviewerSubmissions[] = [
-                        'submission' => $reviewSubmission,
-                        'reviewDueDate' => $review->getData('dateDue')
-                    ];
+                $pendingReviewsByReviewer[$reviewAssignment->getReviewerId()][] = [
+                    'submission' => $submission,
+                    'reviewDueDate' => $reviewAssignment->getDateDue(),
+                ];
+            }
+
+            $activeReviewerIds = $this->getActiveReviewersIds($context->getId());
+
+            foreach ($pendingReviewsByReviewer as $reviewerId => $reviewerSubmissions) {
+                if (!in_array($reviewerId, $activeReviewerIds)) {
+                    continue;
+                }
+
+                $reviewer = Repo::user()->get($reviewerId);
+                if (!$reviewer) {
+                    continue;
                 }
 
                 $pendingReviewsEmailBuilder = new PendingReviewsEmailBuilder(
                     $context,
                     $reviewer,
                     $reviewerSubmissions,
-                    $context->getData('primaryLocale')
+                    $context->getPrimaryLocale()
                 );
 
                 $email = $pendingReviewsEmailBuilder->buildEmail();
@@ -52,13 +78,15 @@ class SendPendingReviewsReminder extends ScheduledTask
         return true;
     }
 
-    public function getReviewersFromContext($contextId)
+    public function getActiveReviewersIds(int $contextId): array
     {
-        return Repo::user()
-            ->getCollector()
+        $userCollector = Repo::user()->getCollector();
+        $activeReviewerIds = $userCollector
             ->filterByContextIds([$contextId])
             ->filterByRoleIds([Role::ROLE_ID_REVIEWER])
-            ->getMany()
+            ->filterByStatus($userCollector::STATUS_ACTIVE)
+            ->getIds()
             ->toArray();
+        return $activeReviewerIds;
     }
 }

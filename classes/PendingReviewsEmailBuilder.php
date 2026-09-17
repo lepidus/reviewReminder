@@ -37,8 +37,15 @@ class PendingReviewsEmailBuilder
         ]);
         $email->from($this->context->getData('contactEmail'), $this->context->getData('contactName'));
         $email->to([['name' => $this->reviewer->getFullName(), 'email' => $this->reviewer->getEmail()]]);
-        $email->subject($emailTemplate->getLocalizedData('subject', $this->locale));
-        $email->body($emailTemplate->getLocalizedData('body', $this->locale));
+        $email->subject(
+            $emailTemplate->getData('subject', $this->locale)
+                ?? $emailTemplate->getLocalizedData('subject', $this->locale)
+        );
+        $email->body(
+            $emailTemplate->getData('body', $this->locale)
+                ?? $emailTemplate->getLocalizedData('body', $this->locale)
+        );
+        $email->setLocale($this->locale);
 
         return $email;
     }
@@ -55,7 +62,7 @@ class PendingReviewsEmailBuilder
             $url = $request->getDispatcher()->url(
                 $request,
                 Application::ROUTE_PAGE,
-                $this->context->getData('urlPath'),
+                $this->context->getPath(),
                 'reviewer',
                 'submission',
                 null,
@@ -66,7 +73,9 @@ class PendingReviewsEmailBuilder
             $reviewDueDate = new DateTime($submissionData['reviewDueDate']);
             $reviewDueDate = $reviewDueDate->format($this->context->getLocalizedDateFormatShort($this->locale));
 
-            $submissionString = "<p><a href=\"{$url}\">" . $publication->getLocalizedData('title', $this->locale) . '</a> - '
+            $submissionTitle = $publication->getData('title', $this->locale)
+                ?? $publication->getLocalizedData('title', $this->locale);
+            $submissionString = "<p><a href=\"{$url}\">" . $submissionTitle . '</a> - '
                 . __('plugins.generic.reviewReminder.reviewDueDate', ['reviewDueDate' => $reviewDueDate], $this->locale) . '</p>';
 
             $submissionsString .= $submissionString;
