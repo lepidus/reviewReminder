@@ -16,6 +16,7 @@ namespace APP\plugins\generic\reviewReminder;
 
 use PKP\plugins\GenericPlugin;
 use PKP\plugins\Hook;
+use Illuminate\Support\Facades\DB;
 use APP\plugins\generic\reviewReminder\classes\HookCallbacks;
 
 class ReviewReminderPlugin extends GenericPlugin
@@ -23,10 +24,15 @@ class ReviewReminderPlugin extends GenericPlugin
     public function register($category, $path, $mainContextId = null)
     {
         $success = parent::register($category, $path, $mainContextId);
-        if ($success && $this->getEnabled()) {
+        if (!$success) {
+            return $success;
+        }
+
+        Hook::add('AcronPlugin::parseCronTab', [$this, 'addTasksToCrontab']);
+
+        if ($this->getEnabled()) {
             $hookCallbacks = new HookCallbacks();
             Hook::add('ReviewerAction::confirmReview', [$hookCallbacks, 'sendReviewReminder']);
-            Hook::add('AcronPlugin::parseCronTab', [$this, 'addTasksToCrontab']);
         }
         return $success;
     }
@@ -48,8 +54,21 @@ class ReviewReminderPlugin extends GenericPlugin
 
     public function addTasksToCrontab($hookName, $params)
     {
+        if (!$this->isEnabledInAnyContext()) {
+            return Hook::CONTINUE;
+        }
+
         $taskFilesPath = &$params[0];
         $taskFilesPath[] = $this->getPluginPath() . DIRECTORY_SEPARATOR . 'scheduledTasks.xml';
         return Hook::CONTINUE;
+    }
+
+    private function isEnabledInAnyContext(): bool
+    {
+        return DB::table('plugin_settings')
+            ->where('plugin_name', $this->getName())
+            ->where('setting_name', 'enabled')
+            ->where('setting_value', '1')
+            ->exists();
     }
 }

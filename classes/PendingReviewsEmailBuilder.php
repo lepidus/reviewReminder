@@ -7,7 +7,6 @@ use APP\core\Application;
 use APP\facades\Repo;
 use APP\plugins\generic\reviewReminder\classes\mail\mailables\PendingReviewsReminder;
 
-
 class PendingReviewsEmailBuilder
 {
     private $context;

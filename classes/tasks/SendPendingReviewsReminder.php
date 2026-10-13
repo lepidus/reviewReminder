@@ -9,6 +9,7 @@ use PKP\security\Role;
 use Illuminate\Support\Facades\Mail;
 use APP\plugins\generic\reviewReminder\classes\ReviewReminderDAO;
 use APP\plugins\generic\reviewReminder\classes\PendingReviewsEmailBuilder;
+use APP\plugins\generic\reviewReminder\ReviewReminderPlugin;
 
 class SendPendingReviewsReminder extends ScheduledTask
 {
@@ -17,12 +18,17 @@ class SendPendingReviewsReminder extends ScheduledTask
         $contextDao = Application::getContextDAO();
         $contexts = $contextDao->getAll(true);
         $reviewReminderDao = new ReviewReminderDAO();
+        $plugin = new ReviewReminderPlugin();
 
         while ($context = $contexts->next()) {
+            if (!$plugin->getEnabled($context->getId())) {
+                continue;
+            }
+
             $reviewers = $this->getReviewersFromContext($context->getId());
 
             foreach ($reviewers as $reviewer) {
-                $reviewerIncompleteReviews = $reviewReminderDao->getIncompleteReviewsByReviewer($reviewer->getId());
+                $reviewerIncompleteReviews = $reviewReminderDao->getIncompleteReviewsByReviewer($reviewer->getId(), $context->getId());
 
                 if (empty($reviewerIncompleteReviews)) {
                     continue;
@@ -48,6 +54,8 @@ class SendPendingReviewsReminder extends ScheduledTask
                 Mail::send($email);
             }
         }
+
+        return true;
     }
 
     public function getReviewersFromContext($contextId)
