@@ -54,6 +54,8 @@ class SendPendingReviewsReminder extends ScheduledTask
                 Mail::send($email);
             }
         }
+
+        return true;
     }
 
     public function getReviewersFromContext($contextId)

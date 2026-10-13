@@ -212,4 +212,11 @@ class SendPendingReviewsReminderTest extends PKPTestCase
 
         $this->assertNotContains(7, $this->getRemindedSubmissionIds());
     }
+
+    public function testShouldReportSuccessfulExecution(): void
+    {
+        $task = new SendPendingReviewsReminder();
+
+        $this->assertTrue($task->executeActions());
+    }
 }
