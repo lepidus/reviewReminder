@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use PKP\db\DAORegistry;
 use PKP\security\Role;
+use PKP\submission\PKPSubmission;
 use PKP\tests\PKPTestCase;
 
 class SendPendingReviewsReminderTest extends PKPTestCase
@@ -20,10 +21,15 @@ class SendPendingReviewsReminderTest extends PKPTestCase
     ];
     private const SHARED_REVIEWER_ID = 10;
     private const SECOND_CONTEXT_CONTACT_EMAIL = 'second.journal@mailinator.com';
+    private const PUBLISHED_SUBMISSION_IDS = [1, 17];
+    private const SUBMISSION_IDS_PAST_REVIEW_STAGE = [3, 5, 6, 9, 15, 19];
+    private const SUBMISSION_IDS_UNDER_REVIEW = [7, 12];
 
     private $pluginSettingsDao;
     private $secondContextId;
     private $secondContextReviewerGroupId;
+    private $declinedSubmissionId;
+    private $newReviewRoundId;
 
     protected function setUp(): void
     {
@@ -40,6 +46,16 @@ class SendPendingReviewsReminderTest extends PKPTestCase
             $this->pluginSettingsDao->deleteSetting($this->secondContextId, self::PLUGIN_NAME, 'enabled');
             DB::table('user_groups')->where('user_group_id', $this->secondContextReviewerGroupId)->delete();
             DB::table('journals')->where('journal_id', $this->secondContextId)->delete();
+        }
+
+        if ($this->declinedSubmissionId) {
+            DB::table('submissions')
+                ->where('submission_id', $this->declinedSubmissionId)
+                ->update(['status' => PKPSubmission::STATUS_QUEUED]);
+        }
+
+        if ($this->newReviewRoundId) {
+            DB::table('review_rounds')->where('review_round_id', $this->newReviewRoundId)->delete();
         }
 
         parent::tearDown();
@@ -76,10 +92,42 @@ class SendPendingReviewsReminderTest extends PKPTestCase
         ]);
     }
 
+    private function declineSubmission(int $submissionId): void
+    {
+        $this->declinedSubmissionId = $submissionId;
+        DB::table('submissions')
+            ->where('submission_id', $submissionId)
+            ->update(['status' => PKPSubmission::STATUS_DECLINED]);
+    }
+
+    private function startNewReviewRound(int $submissionId): void
+    {
+        $currentRound = DB::table('review_rounds')->where('submission_id', $submissionId)->first();
+        $this->newReviewRoundId = DB::table('review_rounds')->insertGetId([
+            'submission_id' => $submissionId,
+            'stage_id' => $currentRound->stage_id,
+            'round' => $currentRound->round + 1,
+            'status' => $currentRound->status,
+        ], 'review_round_id');
+    }
+
     private function runTask(): void
     {
         $task = new SendPendingReviewsReminder();
         $task->executeActions();
+    }
+
+    private function getRemindedSubmissionIds(): array
+    {
+        return Mail::sent(PendingReviewsReminder::class)
+            ->flatMap(function (PendingReviewsReminder $email) {
+                preg_match_all('/submissionId=(\d+)/', $email->viewData['submissionsList'], $matches);
+                return array_map('intval', $matches[1]);
+            })
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
     }
 
     public function testShouldNotSendRemindersFromContextWherePluginIsDisabled(): void
@@ -116,5 +164,52 @@ class SendPendingReviewsReminderTest extends PKPTestCase
             PendingReviewsReminder::class,
             fn (PendingReviewsReminder $email) => $email->from[0]['address'] == self::SECOND_CONTEXT_CONTACT_EMAIL
         );
+    }
+
+    public function testShouldRemindOnlyReviewsOfSubmissionsUnderReview(): void
+    {
+        $this->enablePlugin(self::FIRST_CONTEXT_ID);
+
+        $this->runTask();
+
+        $this->assertEquals(self::SUBMISSION_IDS_UNDER_REVIEW, $this->getRemindedSubmissionIds());
+    }
+
+    public function testShouldNotRemindReviewsOfPublishedSubmissions(): void
+    {
+        $this->enablePlugin(self::FIRST_CONTEXT_ID);
+
+        $this->runTask();
+
+        $this->assertEmpty(array_intersect(self::PUBLISHED_SUBMISSION_IDS, $this->getRemindedSubmissionIds()));
+    }
+
+    public function testShouldNotRemindReviewsOfSubmissionsPastReviewStage(): void
+    {
+        $this->enablePlugin(self::FIRST_CONTEXT_ID);
+
+        $this->runTask();
+
+        $this->assertEmpty(array_intersect(self::SUBMISSION_IDS_PAST_REVIEW_STAGE, $this->getRemindedSubmissionIds()));
+    }
+
+    public function testShouldNotRemindReviewsOfDeclinedSubmissions(): void
+    {
+        $this->enablePlugin(self::FIRST_CONTEXT_ID);
+        $this->declineSubmission(12);
+
+        $this->runTask();
+
+        $this->assertNotContains(12, $this->getRemindedSubmissionIds());
+    }
+
+    public function testShouldNotRemindReviewsFromPreviousReviewRounds(): void
+    {
+        $this->enablePlugin(self::FIRST_CONTEXT_ID);
+        $this->startNewReviewRound(7);
+
+        $this->runTask();
+
+        $this->assertNotContains(7, $this->getRemindedSubmissionIds());
     }
 }
