@@ -126,7 +126,7 @@ class ICS
 
         // Build ICS properties - add header
         $props = array();
-        foreach($this->properties as $k => $v) {
+        foreach ($this->properties as $k => $v) {
             $props[strtoupper($k . ($k === 'url' ? ';VALUE=URI' : ''))] = $v;
         }
 
@@ -148,7 +148,7 @@ class ICS
 
     private function sanitize_val($val, $key = false)
     {
-        switch($key) {
+        switch ($key) {
             case 'dtend':
             case 'dtstamp':
             case 'dtstart':
