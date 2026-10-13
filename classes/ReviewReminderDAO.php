@@ -8,12 +8,14 @@ use Illuminate\Support\Facades\DB;
 
 class ReviewReminderDAO extends DAO
 {
-    public function getIncompleteReviewsByReviewer(int $reviewerId)
+    public function getIncompleteReviewsByReviewer(int $reviewerId, int $contextId)
     {
         $results = DB::table('review_assignments as r')
             ->leftJoin('review_rounds as r2', 'r.review_round_id', '=', 'r2.review_round_id')
+            ->join('submissions as s', 'r.submission_id', '=', 's.submission_id')
             ->select('r.*', 'r2.review_revision')
             ->where('r.reviewer_id', '=', $reviewerId)
+            ->where('s.context_id', '=', $contextId)
             ->whereNotNull('r.date_notified')
             ->whereNull('r.date_completed')
             ->where('r.declined', '!=', 1)
