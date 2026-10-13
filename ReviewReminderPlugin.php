@@ -23,10 +23,15 @@ class ReviewReminderPlugin extends GenericPlugin
     public function register($category, $path, $mainContextId = null)
     {
         $success = parent::register($category, $path, $mainContextId);
-        if ($success && $this->getEnabled()) {
+        if (!$success) {
+            return $success;
+        }
+
+        Hook::add('AcronPlugin::parseCronTab', [$this, 'addTasksToCrontab']);
+
+        if ($this->getEnabled()) {
             $hookCallbacks = new HookCallbacks();
             Hook::add('ReviewerAction::confirmReview', [$hookCallbacks, 'sendReviewReminder']);
-            Hook::add('AcronPlugin::parseCronTab', [$this, 'addTasksToCrontab']);
         }
         return $success;
     }
