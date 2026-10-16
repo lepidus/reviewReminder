@@ -20,8 +20,14 @@ class HookCallbacksTest extends PKPTestCase
     private const CONTEXT_PATH = 'publicknowledge';
     private const SUBMISSION_ID = 7;
     private const REVIEWER_ID = 9;
+    private const NAMESAKE_REVIEWER_ID = 10;
+    private const NEW_ROUND_DUE_DATE = '2027-03-15 00:00:00';
+    private const NEW_ROUND_CALENDAR_END = 'DTEND:20270315T235959';
 
     private $reviewAssignmentDao;
+    private $newReviewRoundId;
+    private $newReviewAssignmentId;
+    private $originalNamesOfRenamedReviewer = [];
     private $confirmedReviewAssignmentIds = [];
 
     protected function getMockedRegistryKeys(): array
@@ -39,6 +45,22 @@ class HookCallbacksTest extends PKPTestCase
     protected function tearDown(): void
     {
         DB::table('access_keys')->whereIn('assoc_id', $this->confirmedReviewAssignmentIds)->delete();
+
+        if ($this->newReviewAssignmentId) {
+            DB::table('review_assignments')->where('review_id', $this->newReviewAssignmentId)->delete();
+        }
+
+        if ($this->newReviewRoundId) {
+            DB::table('review_rounds')->where('review_round_id', $this->newReviewRoundId)->delete();
+        }
+
+        foreach ($this->originalNamesOfRenamedReviewer as $originalName) {
+            DB::table('user_settings')
+                ->where('user_id', $originalName->user_id)
+                ->where('locale', $originalName->locale)
+                ->where('setting_name', $originalName->setting_name)
+                ->update(['setting_value' => $originalName->setting_value]);
+        }
 
         parent::tearDown();
     }
@@ -65,6 +87,48 @@ class HookCallbacksTest extends PKPTestCase
         return $this->reviewAssignmentDao->getLastReviewRoundReviewAssignmentByReviewer(self::SUBMISSION_ID, $reviewerId);
     }
 
+    private function assignReviewerToNewReviewRound(int $reviewerId): ReviewAssignment
+    {
+        $currentAssignment = $this->getCurrentReviewAssignment($reviewerId);
+        $this->newReviewRoundId = DB::table('review_rounds')->insertGetId([
+            'submission_id' => self::SUBMISSION_ID,
+            'stage_id' => $currentAssignment->getStageId(),
+            'round' => $currentAssignment->getRound() + 1,
+            'status' => 0,
+        ], 'review_round_id');
+
+        $newAssignment = clone $currentAssignment;
+        $newAssignment->setReviewRoundId($this->newReviewRoundId);
+        $newAssignment->setRound($currentAssignment->getRound() + 1);
+        $newAssignment->setDateDue(self::NEW_ROUND_DUE_DATE);
+        $newAssignment->setDateConfirmed(null);
+        $this->reviewAssignmentDao->insertObject($newAssignment);
+        $this->newReviewAssignmentId = $newAssignment->getId();
+
+        return $this->reviewAssignmentDao->getById($this->newReviewAssignmentId);
+    }
+
+    private function giveReviewerTheNameOf(int $reviewerId, int $namesakeId): void
+    {
+        $this->originalNamesOfRenamedReviewer = DB::table('user_settings')
+            ->where('user_id', $reviewerId)
+            ->whereIn('setting_name', ['givenName', 'familyName'])
+            ->get()
+            ->all();
+
+        $namesakeNames = DB::table('user_settings')
+            ->where('user_id', $namesakeId)
+            ->whereIn('setting_name', ['givenName', 'familyName'])
+            ->get();
+        foreach ($namesakeNames as $namesakeName) {
+            DB::table('user_settings')
+                ->where('user_id', $reviewerId)
+                ->where('locale', $namesakeName->locale)
+                ->where('setting_name', $namesakeName->setting_name)
+                ->update(['setting_value' => $namesakeName->setting_value]);
+        }
+    }
+
     private function confirmReview(ReviewAssignment $reviewAssignment): void
     {
         $this->confirmedReviewAssignmentIds[] = $reviewAssignment->getId();
@@ -80,6 +144,26 @@ class HookCallbacksTest extends PKPTestCase
         $sentReminders = Mail::sent(ReviewReminder::class);
         $this->assertCount(1, $sentReminders);
         return $sentReminders->first();
+    }
+
+    public function testShouldRemindDueDateOfReviewRoundBeingAccepted(): void
+    {
+        $newRoundAssignment = $this->assignReviewerToNewReviewRound(self::REVIEWER_ID);
+
+        $this->confirmReview($newRoundAssignment);
+
+        $calendarInvite = $this->getSentReminder()->rawAttachments[0];
+        $this->assertStringContainsString(self::NEW_ROUND_CALENDAR_END, $calendarInvite['data']);
+    }
+
+    public function testShouldRemindReviewerWhoAcceptedWhenAnotherReviewerHasTheSameName(): void
+    {
+        $this->giveReviewerTheNameOf(self::REVIEWER_ID, self::NAMESAKE_REVIEWER_ID);
+        $namesake = Repo::user()->get(self::NAMESAKE_REVIEWER_ID);
+
+        $this->confirmReview($this->getCurrentReviewAssignment(self::NAMESAKE_REVIEWER_ID));
+
+        $this->assertEquals($namesake->getEmail(), $this->getSentReminder()->to[0]['address']);
     }
 
     public function testShouldAttachCalendarInviteWithoutWritingFileToDisk(): void
