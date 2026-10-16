@@ -50,6 +50,8 @@ Eligible reviews are those for which the reviewer has been notified, in the late
 
 The list includes both overdue reviews and reviews whose deadlines are still in the future. Sending is weekly; it is not triggered a fixed number of days before an invitation or review deadline. The weekly email uses the `PENDING_REVIEWS_REMINDER` template and does not include a calendar attachment.
 
+After a weekly email is sent, the reminder is recorded in the *Activity Log* of each listed submission, with its date and time, using the same message as OJS automatic reminders. The review's own reminder date is not changed, so OJS automatic reminders keep working as configured.
+
 ### Scheduled tasks and cron
 
 The plugin registers one weekly task with the **OJS 3.5 task scheduler**, scheduled for Mondays. It does not install a separate operating-system cron job.
