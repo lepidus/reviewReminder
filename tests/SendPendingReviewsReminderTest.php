@@ -2,12 +2,16 @@
 
 use APP\plugins\generic\reviewReminder\classes\mail\mailables\PendingReviewsReminder;
 use APP\plugins\generic\reviewReminder\classes\tasks\SendPendingReviewsReminder;
+use APP\facades\Repo;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use PKP\core\PKPApplication;
 use PKP\db\DAORegistry;
+use PKP\log\event\PKPSubmissionEventLogEntry;
 use PKP\security\Role;
 use PKP\submission\PKPSubmission;
 use PKP\tests\PKPTestCase;
+use Symfony\Component\Mailer\Exception\TransportException;
 
 class SendPendingReviewsReminderTest extends PKPTestCase
 {
@@ -30,11 +34,13 @@ class SendPendingReviewsReminderTest extends PKPTestCase
     private $secondContextReviewerGroupId;
     private $declinedSubmissionId;
     private $newReviewRoundId;
+    private $lastEventLogIdBeforeTest;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->pluginSettingsDao = DAORegistry::getDAO('PluginSettingsDAO');
+        $this->lastEventLogIdBeforeTest = DB::table('event_log')->max('log_id');
         Mail::fake();
     }
 
@@ -57,6 +63,10 @@ class SendPendingReviewsReminderTest extends PKPTestCase
         if ($this->newReviewRoundId) {
             DB::table('review_rounds')->where('review_round_id', $this->newReviewRoundId)->delete();
         }
+
+        $createdEventLogIds = DB::table('event_log')->where('log_id', '>', $this->lastEventLogIdBeforeTest)->pluck('log_id');
+        DB::table('event_log_settings')->whereIn('log_id', $createdEventLogIds)->delete();
+        DB::table('event_log')->whereIn('log_id', $createdEventLogIds)->delete();
 
         parent::tearDown();
     }
@@ -126,6 +136,20 @@ class SendPendingReviewsReminderTest extends PKPTestCase
             })
             ->unique()
             ->sort()
+            ->values()
+            ->all();
+    }
+
+    private function getRecordedReminders(): array
+    {
+        return Repo::eventLog()
+            ->getCollector()
+            ->filterByAssoc(PKPApplication::ASSOC_TYPE_SUBMISSION)
+            ->getMany()
+            ->filter(
+                fn ($entry) => $entry->getId() > $this->lastEventLogIdBeforeTest
+                    && $entry->getData('eventType') == PKPSubmissionEventLogEntry::SUBMISSION_LOG_REVIEW_REMIND_AUTO
+            )
             ->values()
             ->all();
     }
@@ -218,5 +242,70 @@ class SendPendingReviewsReminderTest extends PKPTestCase
         $task = new SendPendingReviewsReminder();
 
         $this->assertTrue($task->executeActions());
+    }
+
+    public function testShouldRecordReminderInActivityLogOfEachRemindedReview(): void
+    {
+        $this->enablePlugin(self::FIRST_CONTEXT_ID);
+
+        $this->runTask();
+
+        $remindedReviews = Mail::sent(PendingReviewsReminder::class)
+            ->flatMap(function (PendingReviewsReminder $email) {
+                $reviewerId = Repo::user()->getByEmail($email->to[0]['address'], true)->getId();
+                preg_match_all('/submissionId=(\d+)/', $email->viewData['submissionsList'], $matches);
+                return array_map(fn ($submissionId) => "$submissionId-$reviewerId", $matches[1]);
+            })
+            ->sort()
+            ->values()
+            ->all();
+        $recordedReminders = collect($this->getRecordedReminders())
+            ->map(fn ($entry) => $entry->getData('assocId') . '-' . $entry->getData('recipientId'))
+            ->sort()
+            ->values()
+            ->all();
+        $this->assertNotEmpty($remindedReviews);
+        $this->assertEquals($remindedReviews, $recordedReminders);
+    }
+
+    public function testShouldRecordReminderForTheRemindedReviewer(): void
+    {
+        $this->enablePlugin(self::FIRST_CONTEXT_ID);
+
+        $this->runTask();
+
+        $recordedReminders = $this->getRecordedReminders();
+        $this->assertNotEmpty($recordedReminders);
+        $reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
+        foreach ($recordedReminders as $entry) {
+            $reviewAssignment = $reviewAssignmentDao->getById($entry->getData('reviewAssignmentId'));
+            $this->assertEquals($reviewAssignment->getReviewerId(), $entry->getData('recipientId'));
+            $this->assertEquals($reviewAssignment->getSubmissionId(), $entry->getData('assocId'));
+            $this->assertEquals('submission.event.reviewer.reviewerRemindedAuto', $entry->getData('message'));
+        }
+    }
+
+    public function testShouldNotChangeReviewReminderDateUsedByCoreReminders(): void
+    {
+        $this->enablePlugin(self::FIRST_CONTEXT_ID);
+        $reminderDatesBeforeTask = DB::table('review_assignments')->pluck('date_reminded', 'review_id')->all();
+
+        $this->runTask();
+
+        $this->assertNotEmpty($this->getRecordedReminders());
+        $this->assertEquals($reminderDatesBeforeTask, DB::table('review_assignments')->pluck('date_reminded', 'review_id')->all());
+    }
+
+    public function testShouldNotRecordReminderWhenEmailIsNotSent(): void
+    {
+        $this->enablePlugin(self::FIRST_CONTEXT_ID);
+        Mail::shouldReceive('send')->andThrow(new TransportException('Connection refused'));
+
+        try {
+            $this->runTask();
+        } catch (TransportException $exception) {
+        }
+
+        $this->assertEmpty($this->getRecordedReminders());
     }
 }
