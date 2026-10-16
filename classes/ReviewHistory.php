@@ -1,0 +1,64 @@
+<?php
+
+namespace APP\plugins\generic\reviewReminder\classes;
+
+use APP\core\Application;
+use APP\plugins\generic\reviewReminder\ReviewReminderPlugin;
+use PKP\controllers\grid\users\reviewer\PKPReviewerGridHandler;
+use PKP\core\PKPApplication;
+use PKP\plugins\Hook;
+use PKP\submission\reviewAssignment\ReviewAssignment;
+
+class ReviewHistory
+{
+    private const CORE_TEMPLATE = 'workflow/reviewHistory.tpl';
+    private const REMINDER_LOCALE_KEY = 'common.reminder';
+
+    public function __construct(private ReviewReminderPlugin $plugin)
+    {
+    }
+
+    public function addReminders(string $hookName, array $args): bool
+    {
+        $templateManager = $args[0];
+        $template = $args[1];
+        $output = &$args[4];
+
+        if ($template !== self::CORE_TEMPLATE) {
+            return Hook::CONTINUE;
+        }
+
+        $handler = Application::get()->getRequest()->getRouter()?->getHandler();
+        if (!$handler instanceof PKPReviewerGridHandler) {
+            return Hook::CONTINUE;
+        }
+
+        $reviewAssignment = $handler->getAuthorizedContextObject(PKPApplication::ASSOC_TYPE_REVIEW_ASSIGNMENT);
+        if (!$reviewAssignment) {
+            return Hook::CONTINUE;
+        }
+
+        $templateManager->assign('reviewHistoryEntries', $this->getHistoryEntries($templateManager->getTemplateVars('dates') ?? [], $reviewAssignment));
+        $output = $templateManager->fetch($this->plugin->getTemplateResource('reviewHistory.tpl'));
+
+        return Hook::ABORT;
+    }
+
+    private function getHistoryEntries(array $reviewAssignmentDates, ReviewAssignment $reviewAssignment): array
+    {
+        $entries = [];
+        foreach ($reviewAssignmentDates as $localeKey => $date) {
+            if ($date) {
+                $entries[] = ['date' => $date, 'localeKey' => $localeKey];
+            }
+        }
+
+        foreach ((new ReminderActivityLog())->getReminderDates($reviewAssignment) as $date) {
+            $entries[] = ['date' => $date, 'localeKey' => self::REMINDER_LOCALE_KEY];
+        }
+
+        usort($entries, fn (array $entry, array $otherEntry) => strtotime($entry['date']) <=> strtotime($otherEntry['date']));
+
+        return $entries;
+    }
+}
