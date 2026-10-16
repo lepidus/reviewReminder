@@ -18,6 +18,7 @@ use PKP\plugins\GenericPlugin;
 use PKP\plugins\Hook;
 use Illuminate\Support\Facades\DB;
 use APP\plugins\generic\reviewReminder\classes\HookCallbacks;
+use APP\plugins\generic\reviewReminder\classes\ReviewHistory;
 
 class ReviewReminderPlugin extends GenericPlugin
 {
@@ -33,6 +34,7 @@ class ReviewReminderPlugin extends GenericPlugin
         if ($this->getEnabled()) {
             $hookCallbacks = new HookCallbacks();
             Hook::add('ReviewerAction::confirmReview', [$hookCallbacks, 'sendReviewReminder']);
+            Hook::add('TemplateManager::fetch', [new ReviewHistory($this), 'addReminders']);
         }
         return $success;
     }

@@ -3,6 +3,7 @@
 namespace APP\plugins\generic\reviewReminder\classes;
 
 use APP\facades\Repo;
+use Illuminate\Support\Facades\DB;
 use PKP\core\Core;
 use PKP\core\PKPApplication;
 use PKP\log\event\PKPSubmissionEventLogEntry;
@@ -28,5 +29,20 @@ class ReminderActivityLog
             'reviewAssignmentId' => $reviewAssignment->getId(),
         ]);
         Repo::eventLog()->add($eventLog);
+    }
+
+    public function getReminderDates(ReviewAssignment $reviewAssignment): array
+    {
+        return DB::table('event_log as e')
+            ->join('event_log_settings as s', 's.log_id', '=', 'e.log_id')
+            ->where('e.assoc_type', PKPApplication::ASSOC_TYPE_SUBMISSION)
+            ->where('e.assoc_id', $reviewAssignment->getSubmissionId())
+            ->where('e.event_type', PKPSubmissionEventLogEntry::SUBMISSION_LOG_REVIEW_REMIND_AUTO)
+            ->where('e.message', self::REMINDER_MESSAGE)
+            ->where('s.setting_name', 'reviewAssignmentId')
+            ->where('s.setting_value', (string) $reviewAssignment->getId())
+            ->orderBy('e.date_logged')
+            ->pluck('e.date_logged')
+            ->all();
     }
 }

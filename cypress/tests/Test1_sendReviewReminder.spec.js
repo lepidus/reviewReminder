@@ -45,4 +45,17 @@ describe('Send Review Reminder', function () {
         cy.contains('You can also use the attached reminder to add this event to your preferred calendar');
         cy.contains('invite.ics');
     });
+    it('Reminder is recorded in the submission activity log', function () {
+        cy.login('admin', 'admin', 'publicknowledge');
+        cy.findSubmission('active', submissionTitle);
+        cy.contains('button', 'Activity Log').click();
+        cy.contains('An automatic reminder email was sent to to Adela Gallego regarding their review assignment');
+    });
+    it('Reminder is listed in the reviewer history', function () {
+        cy.login('admin', 'admin', 'publicknowledge');
+        cy.findSubmission('active', submissionTitle);
+        cy.contains('tr', 'Adela Gallego').find('a.show_extras').click();
+        cy.contains('tr', 'Adela Gallego').next('tr').contains('a', 'History').click();
+        cy.get('.pkp_review_history').contains('Reminder');
+    });
 });
