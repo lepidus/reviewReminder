@@ -11,6 +11,7 @@ use PKP\core\Dispatcher;
 use PKP\core\Registry;
 use PKP\core\PKPRequest;
 use PKP\db\DAORegistry;
+use PKP\facades\Locale;
 use PKP\submission\reviewAssignment\ReviewAssignment;
 use PKP\submission\reviewer\ReviewerAction;
 use PKP\tests\PKPTestCase;
@@ -23,12 +24,14 @@ class HookCallbacksTest extends PKPTestCase
     private const NAMESAKE_REVIEWER_ID = 10;
     private const NEW_ROUND_DUE_DATE = '2027-03-15 00:00:00';
     private const NEW_ROUND_CALENDAR_END = 'DTEND:20270315T235959';
+    private const INJECTED_CALENDAR_PROPERTY = 'X-INJECTED-PROPERTY:injected';
 
     private $reviewAssignmentDao;
     private $newReviewRoundId;
     private $newReviewAssignmentId;
     private $originalNamesOfRenamedReviewer = [];
     private $confirmedReviewAssignmentIds = [];
+    private $originalSubmissionTitle;
 
     protected function getMockedRegistryKeys(): array
     {
@@ -39,6 +42,7 @@ class HookCallbacksTest extends PKPTestCase
     {
         parent::setUp();
         $this->reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
+        Locale::registerPath('plugins/generic/reviewReminder/locale');
         Mail::fake();
     }
 
@@ -60,6 +64,10 @@ class HookCallbacksTest extends PKPTestCase
                 ->where('locale', $originalName->locale)
                 ->where('setting_name', $originalName->setting_name)
                 ->update(['setting_value' => $originalName->setting_value]);
+        }
+
+        if ($this->originalSubmissionTitle) {
+            $this->updateSubmissionTitle($this->originalSubmissionTitle);
         }
 
         parent::tearDown();
@@ -129,6 +137,22 @@ class HookCallbacksTest extends PKPTestCase
         }
     }
 
+    private function updateSubmissionTitle(string $title): void
+    {
+        $publicationId = Repo::submission()->get(self::SUBMISSION_ID)->getData('currentPublicationId');
+        DB::table('publication_settings')
+            ->where('publication_id', $publicationId)
+            ->where('locale', 'en')
+            ->where('setting_name', 'title')
+            ->update(['setting_value' => $title]);
+    }
+
+    private function injectCalendarPropertyIntoSubmissionTitle(): void
+    {
+        $this->originalSubmissionTitle = Repo::submission()->get(self::SUBMISSION_ID)->getLocalizedTitle('en');
+        $this->updateSubmissionTitle("Injected title\r\n" . self::INJECTED_CALENDAR_PROPERTY);
+    }
+
     private function confirmReview(ReviewAssignment $reviewAssignment): void
     {
         $this->confirmedReviewAssignmentIds[] = $reviewAssignment->getId();
@@ -176,5 +200,19 @@ class HookCallbacksTest extends PKPTestCase
         $this->assertEquals('invite.ics', $reminder->rawAttachments[0]['name']);
         $this->assertEquals('text/calendar', $reminder->rawAttachments[0]['options']['mime']);
         $this->assertStringStartsWith('BEGIN:VCALENDAR', $reminder->rawAttachments[0]['data']);
+    }
+
+    public function testShouldKeepSubmissionTitleInsideCalendarInviteDescription(): void
+    {
+        $this->injectCalendarPropertyIntoSubmissionTitle();
+
+        $this->confirmReview($this->getCurrentReviewAssignment(self::REVIEWER_ID));
+
+        $calendarLines = explode("\r\n", $this->getSentReminder()->rawAttachments[0]['data']);
+        $injectedLines = array_filter(
+            $calendarLines,
+            fn (string $line) => str_starts_with($line, self::INJECTED_CALENDAR_PROPERTY)
+        );
+        $this->assertEmpty($injectedLines);
     }
 }

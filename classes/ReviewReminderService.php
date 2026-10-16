@@ -62,7 +62,7 @@ class ReviewReminderService
             'description' => __(
                 'plugins.generic.reviewReminder.ics.description',
                 [
-                    'submissionTitle' => $this->submission->getLocalizedTitle(),
+                    'submissionTitle' => $this->escapeICalendarTitle($this->submission->getLocalizedTitle()),
                     'submissionReviewUrl' => $this->oneClickReviewerUrl ?? $this->getReviewUrl()
                 ]
             ),
@@ -76,6 +76,15 @@ class ReviewReminderService
         ));
 
         return ReminderFile::contents($ics);
+    }
+
+    private function escapeICalendarTitle(string $title): string
+    {
+        return str_replace(
+            ['\\', "\r\n", "\r", "\n"],
+            ['\\\\', '\\n', '\\n', '\\n'],
+            $title
+        );
     }
 
     private function getReviewUrl()
