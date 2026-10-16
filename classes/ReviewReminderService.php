@@ -33,7 +33,7 @@ class ReviewReminderService
 
     public function sendReviewReminder()
     {
-        $filePath = $this->createICalendarFile();
+        $calendarContents = $this->createICalendarContents();
         $this->reviewAssignment->setDateDue($this->reviewDueDate);
         $this->reviewAssignment->setReviewerFullName($this->reviewer->getFullName());
 
@@ -46,12 +46,12 @@ class ReviewReminderService
             ->to([['name' => $this->reviewer->getFullName(), 'email' => $this->reviewer->getEmail()]])
             ->subject($emailTemplate->getLocalizedData('subject'))
             ->body($emailTemplate->getLocalizedData('body'))
-            ->attach($filePath, ['as' => 'invite.ics']);
+            ->attachData($calendarContents, 'invite.ics', ['mime' => 'text/calendar']);
 
         Mail::send($email);
     }
 
-    private function createICalendarFile()
+    private function createICalendarContents()
     {
         $timeZone = new \DateTimeZone(Config::getVar('general', 'time_zone'));
         $reviewDueDateTime = new \DateTime($this->reviewDueDate, $timeZone);
@@ -62,7 +62,7 @@ class ReviewReminderService
             'description' => __(
                 'plugins.generic.reviewReminder.ics.description',
                 [
-                    'submissionTitle' => $this->submission->getLocalizedTitle(),
+                    'submissionTitle' => $this->escapeICalendarTitle($this->submission->getLocalizedTitle()),
                     'submissionReviewUrl' => $this->oneClickReviewerUrl ?? $this->getReviewUrl()
                 ]
             ),
@@ -75,7 +75,16 @@ class ReviewReminderService
             'organizer' => $this->context->getLocalizedName() . ':mailto:' . $this->context->getData('contactEmail'),
         ));
 
-        return ReminderFile::create($ics);
+        return ReminderFile::contents($ics);
+    }
+
+    private function escapeICalendarTitle(string $title): string
+    {
+        return str_replace(
+            ['\\', "\r\n", "\r", "\n"],
+            ['\\\\', '\\n', '\\n', '\\n'],
+            $title
+        );
     }
 
     private function getReviewUrl()

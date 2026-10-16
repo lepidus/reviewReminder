@@ -13,7 +13,7 @@ class ReminderFileTest extends PKPTestCase
         parent::setUp();
     }
 
-    public function testReminderFileCreation(): void
+    public function testReminderFileContents(): void
     {
         $ics = new ICS([
             'description' => "Description event mock.",
@@ -21,7 +21,9 @@ class ReminderFileTest extends PKPTestCase
             'dtend' => '2024-07-30',
             'summary' => "Reviewer Reminder"
         ]);
-        $filePath = ReminderFile::create($ics);
-        $this->assertMatchesRegularExpression('/\/tmp\/reviewReminder.+\/invite\.ics/', $filePath);
+        $contents = ReminderFile::contents($ics);
+        $this->assertStringStartsWith('BEGIN:VCALENDAR', $contents);
+        $this->assertStringContainsString('SUMMARY:Reviewer Reminder', $contents);
+        $this->assertStringEndsWith('END:VCALENDAR', $contents);
     }
 }
