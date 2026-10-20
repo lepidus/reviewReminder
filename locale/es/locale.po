@@ -18,3 +18,9 @@ msgstr "El plugin Review Reminder envió el recordatorio semanal de revisiones p
 
 msgid "plugins.generic.reviewReminder.history.pendingReviewsReminder"
 msgstr "Recordatorio semanal de revisiones pendientes"
+
+msgid "plugins.generic.reviewReminder.settings.pendingReviewsReminder"
+msgstr "Enviar el recordatorio semanal de revisiones pendientes"
+
+msgid "plugins.generic.reviewReminder.settings.pendingReviewsReminder.description"
+msgstr "Cada lunes, cada revisor con revisiones pendientes en esta revista recibe un correo con la lista y sus plazos."
