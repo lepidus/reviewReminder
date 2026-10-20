@@ -7,11 +7,20 @@ msgstr "Sends a review reminder email to assigned reviewers."
 msgid "plugins.generic.reviewReminder.ics.description"
 msgstr "Deadline for review {$submissionTitle}: {$submissionReviewUrl}"
 
-msgid "plugins.generic.reviewReminder.ics.description.urlNotAvailable"
-msgstr "URL not available"
-
 msgid "plugins.generic.reviewReminder.ics.summary"
 msgstr "{$journalName} - Schedule Your Review"
 
 msgid "plugins.generic.reviewReminder.reviewDueDate"
 msgstr "Due date: {$reviewDueDate}"
+
+msgid "plugins.generic.reviewReminder.event.pendingReviewsReminderSent"
+msgstr "The Review Reminder plugin sent the weekly pending reviews reminder to {$recipientName}"
+
+msgid "plugins.generic.reviewReminder.event.reviewReminderSent"
+msgstr "The Review Reminder plugin sent {$recipientName} a reminder with the review's calendar invitation"
+
+msgid "plugins.generic.reviewReminder.history.pendingReviewsReminder"
+msgstr "Weekly pending reviews reminder"
+
+msgid "plugins.generic.reviewReminder.history.reviewReminder"
+msgstr "Reminder with calendar invitation"

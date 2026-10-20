@@ -9,9 +9,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use PKP\core\Dispatcher;
 use PKP\core\Registry;
+use PKP\core\PKPApplication;
 use PKP\core\PKPRequest;
 use PKP\db\DAORegistry;
 use PKP\facades\Locale;
+use PKP\log\event\PKPSubmissionEventLogEntry;
 use PKP\submission\reviewAssignment\ReviewAssignment;
 use PKP\submission\reviewer\ReviewerAction;
 use PKP\tests\PKPTestCase;
@@ -32,6 +34,7 @@ class HookCallbacksTest extends PKPTestCase
     private $originalNamesOfRenamedReviewer = [];
     private $confirmedReviewAssignmentIds = [];
     private $originalSubmissionTitle;
+    private $lastEventLogIdBeforeTest;
 
     protected function getMockedRegistryKeys(): array
     {
@@ -43,12 +46,17 @@ class HookCallbacksTest extends PKPTestCase
         parent::setUp();
         $this->reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
         Locale::registerPath('plugins/generic/reviewReminder/locale');
+        $this->lastEventLogIdBeforeTest = DB::table('event_log')->max('log_id');
         Mail::fake();
     }
 
     protected function tearDown(): void
     {
         DB::table('access_keys')->whereIn('assoc_id', $this->confirmedReviewAssignmentIds)->delete();
+
+        $createdEventLogIds = DB::table('event_log')->where('log_id', '>', $this->lastEventLogIdBeforeTest)->pluck('log_id');
+        DB::table('event_log_settings')->whereIn('log_id', $createdEventLogIds)->delete();
+        DB::table('event_log')->whereIn('log_id', $createdEventLogIds)->delete();
 
         if ($this->newReviewAssignmentId) {
             DB::table('review_assignments')->where('review_id', $this->newReviewAssignmentId)->delete();
@@ -214,5 +222,45 @@ class HookCallbacksTest extends PKPTestCase
             fn (string $line) => str_starts_with($line, self::INJECTED_CALENDAR_PROPERTY)
         );
         $this->assertEmpty($injectedLines);
+    }
+
+    public function testShouldRecordReminderInActivityLogOfAcceptedReview(): void
+    {
+        $reviewAssignment = $this->getCurrentReviewAssignment(self::REVIEWER_ID);
+
+        $this->confirmReview($reviewAssignment);
+
+        $recordedReminders = Repo::eventLog()
+            ->getCollector()
+            ->filterByAssoc(PKPApplication::ASSOC_TYPE_SUBMISSION, [self::SUBMISSION_ID])
+            ->getMany()
+            ->filter(
+                fn ($entry) => $entry->getId() > $this->lastEventLogIdBeforeTest
+                    && $entry->getData('eventType') == PKPSubmissionEventLogEntry::SUBMISSION_LOG_REVIEW_REMIND_AUTO
+            )
+            ->values()
+            ->all();
+        $this->assertCount(1, $recordedReminders);
+        $this->assertEquals($reviewAssignment->getId(), $recordedReminders[0]->getData('reviewAssignmentId'));
+        $this->assertEquals(self::REVIEWER_ID, $recordedReminders[0]->getData('recipientId'));
+        $this->assertEquals('plugins.generic.reviewReminder.event.reviewReminderSent', $recordedReminders[0]->getData('message'));
+        $this->assertEquals(
+            'The Review Reminder plugin sent ' . $recordedReminders[0]->getData('recipientName') . " a reminder with the review's calendar invitation",
+            $recordedReminders[0]->getTranslatedMessage('en')
+        );
+    }
+
+    public function testShouldNotChangeReviewReminderDateWhenRecordingAcceptedReview(): void
+    {
+        $reviewAssignment = $this->getCurrentReviewAssignment(self::REVIEWER_ID);
+        $reminderDateBeforeAcceptance = DB::table('review_assignments')->where('review_id', $reviewAssignment->getId())->value('date_reminded');
+
+        $this->confirmReview($reviewAssignment);
+
+        $this->assertCount(1, Mail::sent(ReviewReminder::class));
+        $this->assertEquals(
+            $reminderDateBeforeAcceptance,
+            DB::table('review_assignments')->where('review_id', $reviewAssignment->getId())->value('date_reminded')
+        );
     }
 }

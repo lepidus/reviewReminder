@@ -8,6 +8,8 @@ This plugin sends a reminder to the reviewer's email address when they accept to
 
 Once a week, the plugin sends a reminder email to all reviewers. This email contains a list of all reviewer's incomplete reviews, with their due dates.
 
+Every reminder sent by the plugin is recorded in the submission's *Activity Log* with a message identifying the Review Reminder plugin as its sender. In the reviewer's *History*, these reminders are listed with the date and time they were sent in a separate block, below the history kept by OJS, so they are not mistaken for OJS reminders.
+
 ## Installation
 
 Install the *Review Reminder* plugin via the *Plugin Gallery* in `Dashboard > Website > Plugins`.

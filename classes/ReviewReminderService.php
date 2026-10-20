@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Mail;
 use APP\plugins\generic\reviewReminder\classes\mail\mailables\ReviewReminder;
 use APP\plugins\generic\reviewReminder\lib\ICS;
 use APP\plugins\generic\reviewReminder\classes\ReminderFile;
+use APP\plugins\generic\reviewReminder\classes\ReminderActivityLog;
 
 class ReviewReminderService
 {
@@ -49,6 +50,8 @@ class ReviewReminderService
             ->attachData($calendarContents, 'invite.ics', ['mime' => 'text/calendar']);
 
         Mail::send($email);
+
+        (new ReminderActivityLog())->recordReminder($this->reviewAssignment, $this->reviewer, ReminderActivityLog::REVIEW_REMINDER_MESSAGE);
     }
 
     private function createICalendarContents()
