@@ -11,7 +11,7 @@ This README describes the version for **OJS 3.5.0.x**. The plugin adds two featu
 | Feature | When | What the reviewer receives |
 | --- | --- | --- |
 | Calendar attachment | Review invitation (including a subsequent round) or manual reminder sent by an editor | An `invite.ics` file attached to the OJS email itself |
-| Weekly reminder | Mondays, 00:00 UTC | One email per journal listing pending reviews |
+| Weekly reminder | Once a week, from Monday 00:00 | One email per journal listing pending reviews |
 
 Both features are enabled, per journal, by enabling the plugin. The weekly reminder can be turned off in the plugin's **Settings**, in **Website > Plugins > Installed Plugins**, without affecting the calendar attachment. The weekly reminder's day and time cannot be changed.
 
@@ -40,13 +40,13 @@ The weekly reminder is independent of OJS automatic reminders, which keep workin
 
 ### Scheduling
 
-Sending relies on the OJS 3.5 task scheduler and is scheduled for Mondays at 00:00 UTC. Configure the cron job recommended by OJS on the server:
+Sending relies on the OJS 3.5 task scheduler. Each journal receives the reminder once a week, on the first scheduler run from Monday 00:00 on, in the time zone set in `time_zone` in `config.inc.php`. Configure the cron job recommended by OJS on the server:
 
 ```
 * * * * * cd /path/to/ojs && php lib/pkp/tools/scheduler.php run >> /dev/null 2>&1
 ```
 
-Without cron, OJS uses its built-in runner (`task_runner` in `config.inc.php`), which only runs at the end of a site request. In that case the reminder is sent only if a request happens during that minute; otherwise, that week's sending does not happen.
+Without cron, OJS uses its built-in runner (`task_runner` in `config.inc.php`), which only runs at the end of a site request. In that case the reminder is sent on the first site request from Monday on, so on sites with few visits it may arrive later in the week. After the plugin is enabled or updated, the first reminder is sent from the next Monday.
 
 ## Calendar attachment
 

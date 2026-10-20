@@ -11,7 +11,7 @@ Este README descreve a versão para **OJS 3.5.0.x**. O plugin adiciona dois recu
 | Recurso | Quando | O que o avaliador recebe |
 | --- | --- | --- |
 | Anexo de calendário | Convite para avaliação (inclusive em rodada posterior) ou lembrete manual enviado pelo editor | O arquivo `invite.ics` anexado ao próprio email do OJS |
-| Lembrete semanal | Segunda-feira, 00:00 UTC | Um email por revista com as avaliações pendentes |
+| Lembrete semanal | Uma vez por semana, a partir de segunda-feira 00:00 | Um email por revista com as avaliações pendentes |
 
 Os dois recursos são ativados, por revista, ao ativar o plugin. O lembrete semanal pode ser desligado nas **Configurações** do plugin, em **Website > Plugins > Plugins instalados**, sem afetar o anexo de calendário. O dia e o horário do lembrete semanal não podem ser alterados.
 
@@ -40,13 +40,13 @@ O lembrete semanal é independente dos lembretes automáticos do OJS, que contin
 
 ### Agendamento
 
-O envio depende do agendador de tarefas do OJS 3.5 e está programado para segunda-feira às 00:00 UTC. Configure no servidor a tarefa cron recomendada pelo OJS:
+O envio depende do agendador de tarefas do OJS 3.5. Cada revista recebe o lembrete uma vez por semana, na primeira execução do agendador a partir de segunda-feira 00:00, no fuso definido em `time_zone` no `config.inc.php`. Configure no servidor a tarefa cron recomendada pelo OJS:
 
 ```
 * * * * * cd /caminho/do/ojs && php lib/pkp/tools/scheduler.php run >> /dev/null 2>&1
 ```
 
-Sem o cron, o OJS usa o executor integrado (`task_runner` em `config.inc.php`), que só roda ao final de um acesso ao site. Nesse caso, o lembrete só é enviado se houver um acesso durante aquele minuto; caso contrário, o envio da semana não acontece.
+Sem o cron, o OJS usa o executor integrado (`task_runner` em `config.inc.php`), que só roda ao final de um acesso ao site. Nesse caso, o lembrete é enviado no primeiro acesso a partir de segunda-feira, então, em sites com poucas visitas, ele pode chegar mais tarde na semana. Depois que o plugin é ativado ou atualizado, o primeiro lembrete sai a partir da segunda-feira seguinte.
 
 ## Anexo de calendário
 

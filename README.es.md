@@ -11,7 +11,7 @@ Este README describe la versión para **OJS 3.5.0.x**. El plugin añade dos func
 | Función | Cuándo | Qué recibe el revisor |
 | --- | --- | --- |
 | Archivo adjunto de calendario | Invitación de revisión (incluida una ronda posterior) o recordatorio manual enviado por un editor | Un archivo `invite.ics` adjunto al propio correo de OJS |
-| Recordatorio semanal | Lunes, 00:00 UTC | Un correo por revista con las revisiones pendientes |
+| Recordatorio semanal | Una vez por semana, desde el lunes 00:00 | Un correo por revista con las revisiones pendientes |
 
 Ambas funciones se habilitan, por revista, al activar el plugin. El recordatorio semanal puede desactivarse en los **Ajustes** del plugin, en **Sitio web > Plugins > Plugins instalados**, sin afectar el adjunto de calendario. El día y la hora del recordatorio semanal no se pueden cambiar.
 
@@ -40,13 +40,13 @@ El recordatorio semanal es independiente de los recordatorios automáticos de OJ
 
 ### Programación
 
-El envío depende del programador de tareas de OJS 3.5 y está programado para los lunes a las 00:00 UTC. Configure en el servidor la tarea cron recomendada por OJS:
+El envío depende del programador de tareas de OJS 3.5. Cada revista recibe el recordatorio una vez por semana, en la primera ejecución del programador desde el lunes 00:00, en la zona horaria definida en `time_zone` del `config.inc.php`. Configure en el servidor la tarea cron recomendada por OJS:
 
 ```
 * * * * * cd /ruta/de/ojs && php lib/pkp/tools/scheduler.php run >> /dev/null 2>&1
 ```
 
-Sin cron, OJS usa el ejecutor integrado (`task_runner` en `config.inc.php`), que solo se ejecuta al final de un acceso al sitio. En ese caso, el recordatorio solo se envía si hay un acceso durante ese minuto; de lo contrario, el envío de esa semana no ocurre.
+Sin cron, OJS usa el ejecutor integrado (`task_runner` en `config.inc.php`), que solo se ejecuta al final de un acceso al sitio. En ese caso, el recordatorio se envía en el primer acceso desde el lunes, por lo que en sitios con pocas visitas puede llegar más tarde en la semana. Después de activar o actualizar el plugin, el primer recordatorio se envía desde el lunes siguiente.
 
 ## Archivo adjunto de calendario
 

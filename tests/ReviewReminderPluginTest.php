@@ -5,6 +5,7 @@ use APP\core\PageRouter;
 use APP\plugins\generic\reviewReminder\classes\tasks\SendPendingReviewsReminder;
 use APP\plugins\generic\reviewReminder\ReviewReminderPlugin;
 use APP\scheduler\Scheduler;
+use Carbon\Carbon;
 use Illuminate\Console\Scheduling\Event;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\DB;
@@ -16,12 +17,17 @@ use PKP\tests\PKPTestCase;
 
 class ReviewReminderPluginTest extends PKPTestCase
 {
-    private const WEEKLY_ON_MONDAY = '0 0 * * 1';
     private const PLUGIN_NAME = 'reviewreminderplugin';
     private const PLUGIN_PATH = 'plugins/generic/reviewReminder';
     private const CONTEXT_ID = 1;
     private const CONTEXT_PATH = 'publicknowledge';
     private const WEEKLY_REMINDER_SETTING = 'pendingReviewsReminderEnabled';
+    private const LAST_SENT_SETTING = 'pendingReviewsReminderLastSentAt';
+    private const RESTORED_SETTINGS = ['enabled', self::WEEKLY_REMINDER_SETTING, self::LAST_SENT_SETTING];
+    private const PREVIOUS_MONDAY_MIDNIGHT = '2026-10-12 00:00:00';
+    private const MONDAY_MIDNIGHT = '2026-10-19 00:00:00';
+    private const MONDAY_MORNING = '2026-10-19 09:30:00';
+    private const WEDNESDAY_AFTERNOON = '2026-10-21 15:00:00';
 
     private $pluginSettingsDao;
     private $pluginSettingsBeforeTest;
@@ -39,7 +45,7 @@ class ReviewReminderPluginTest extends PKPTestCase
         $this->pluginSettingsBeforeTest = DB::table('plugin_settings')
             ->where('plugin_name', self::PLUGIN_NAME)
             ->where('context_id', self::CONTEXT_ID)
-            ->whereIn('setting_name', ['enabled', self::WEEKLY_REMINDER_SETTING])
+            ->whereIn('setting_name', self::RESTORED_SETTINGS)
             ->get()
             ->keyBy('setting_name');
         $hooks = &Hook::getHooks();
@@ -50,7 +56,8 @@ class ReviewReminderPluginTest extends PKPTestCase
 
     protected function tearDown(): void
     {
-        foreach (['enabled', self::WEEKLY_REMINDER_SETTING] as $settingName) {
+        Carbon::setTestNow();
+        foreach (self::RESTORED_SETTINGS as $settingName) {
             $this->restorePluginSetting($settingName);
         }
         $hooks = &Hook::getHooks();
@@ -75,7 +82,8 @@ class ReviewReminderPluginTest extends PKPTestCase
     {
         $setting = $this->pluginSettingsBeforeTest->get($settingName);
         if ($setting) {
-            $this->pluginSettingsDao->updateSetting(self::CONTEXT_ID, self::PLUGIN_NAME, $settingName, (bool) $setting->setting_value, 'bool');
+            $value = $setting->setting_type === 'bool' ? (bool) $setting->setting_value : $setting->setting_value;
+            $this->pluginSettingsDao->updateSetting(self::CONTEXT_ID, self::PLUGIN_NAME, $settingName, $value, $setting->setting_type);
             return;
         }
 
@@ -99,17 +107,57 @@ class ReviewReminderPluginTest extends PKPTestCase
         );
     }
 
-    public function testShouldScheduleWeeklyPendingReviewsReminder(): void
+    private function setLastPendingReviewsReminder(?string $dateTime): void
     {
-        $schedule = new Schedule();
+        if ($dateTime === null) {
+            $this->pluginSettingsDao->deleteSetting(self::CONTEXT_ID, self::PLUGIN_NAME, self::LAST_SENT_SETTING);
+            return;
+        }
 
+        $this->pluginSettingsDao->updateSetting(self::CONTEXT_ID, self::PLUGIN_NAME, self::LAST_SENT_SETTING, $dateTime, 'string');
+    }
+
+    private function isPendingReviewsReminderScheduledToRunAt(string $dateTime): bool
+    {
+        $this->pluginSettingsDao->updateSetting(self::CONTEXT_ID, self::PLUGIN_NAME, 'enabled', true, 'bool');
+        Carbon::setTestNow($dateTime);
+        $schedule = new Schedule();
         (new ReviewReminderPlugin())->registerSchedules(new Scheduler($schedule));
 
         $pendingReviewsReminders = collect($schedule->events())
             ->filter(fn (Event $event) => $event->getSummaryForDisplay() == SendPendingReviewsReminder::class)
             ->values();
         $this->assertCount(1, $pendingReviewsReminders);
-        $this->assertEquals(self::WEEKLY_ON_MONDAY, $pendingReviewsReminders[0]->expression);
+
+        return $pendingReviewsReminders[0]->isDue(app()) && $pendingReviewsReminders[0]->filtersPass(app());
+    }
+
+    public function testShouldRunPendingReviewsReminderAtMondayMidnight(): void
+    {
+        $this->setLastPendingReviewsReminder(self::PREVIOUS_MONDAY_MIDNIGHT);
+
+        $this->assertTrue($this->isPendingReviewsReminderScheduledToRunAt(self::MONDAY_MIDNIGHT));
+    }
+
+    public function testShouldRunPendingReviewsReminderLaterInTheWeekWhenMondayMidnightWasMissed(): void
+    {
+        $this->setLastPendingReviewsReminder(self::PREVIOUS_MONDAY_MIDNIGHT);
+
+        $this->assertTrue($this->isPendingReviewsReminderScheduledToRunAt(self::MONDAY_MORNING));
+    }
+
+    public function testShouldNotRunPendingReviewsReminderAgainInTheSameWeek(): void
+    {
+        $this->setLastPendingReviewsReminder(self::MONDAY_MIDNIGHT);
+
+        $this->assertFalse($this->isPendingReviewsReminderScheduledToRunAt(self::WEDNESDAY_AFTERNOON));
+    }
+
+    public function testShouldWaitForMondayBeforeTheFirstPendingReviewsReminder(): void
+    {
+        $this->setLastPendingReviewsReminder(null);
+
+        $this->assertFalse($this->isPendingReviewsReminderScheduledToRunAt(self::WEDNESDAY_AFTERNOON));
     }
 
     public function testShouldOfferSettingsWhenPluginIsEnabled(): void

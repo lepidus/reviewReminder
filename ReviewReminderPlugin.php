@@ -15,10 +15,13 @@
 
 namespace APP\plugins\generic\reviewReminder;
 
+use APP\core\Application;
 use APP\plugins\generic\reviewReminder\classes\HookCallbacks;
 use APP\plugins\generic\reviewReminder\classes\ReviewHistory;
 use APP\plugins\generic\reviewReminder\classes\ReviewReminderSettingsForm;
 use APP\plugins\generic\reviewReminder\classes\tasks\SendPendingReviewsReminder;
+use Carbon\Carbon;
+use Carbon\WeekDay;
 use PKP\core\JSONMessage;
 use PKP\linkAction\LinkAction;
 use PKP\linkAction\request\AjaxModal;
@@ -30,6 +33,7 @@ use PKP\scheduledTask\PKPScheduler;
 class ReviewReminderPlugin extends GenericPlugin implements HasTaskScheduler
 {
     public const PENDING_REVIEWS_REMINDER_ENABLED = 'pendingReviewsReminderEnabled';
+    public const PENDING_REVIEWS_REMINDER_LAST_SENT_AT = 'pendingReviewsReminderLastSentAt';
 
     public function register($category, $path, $mainContextId = null)
     {
@@ -56,6 +60,40 @@ class ReviewReminderPlugin extends GenericPlugin implements HasTaskScheduler
     public function isPendingReviewsReminderEnabled(int $contextId): bool
     {
         return (bool) ($this->getSetting($contextId, self::PENDING_REVIEWS_REMINDER_ENABLED) ?? true);
+    }
+
+    public function shouldSendPendingReviewsReminder(int $contextId): bool
+    {
+        return $this->getEnabled($contextId)
+            && $this->isPendingReviewsReminderEnabled($contextId)
+            && $this->isPendingReviewsReminderDue($contextId);
+    }
+
+    public function recordPendingReviewsReminder(int $contextId): void
+    {
+        $this->updateSetting($contextId, self::PENDING_REVIEWS_REMINDER_LAST_SENT_AT, Carbon::now()->toDateTimeString(), 'string');
+    }
+
+    public function hasPendingReviewsReminderToSend(): bool
+    {
+        $contexts = Application::getContextDAO()->getAll(true);
+        while ($context = $contexts->next()) {
+            if ($this->shouldSendPendingReviewsReminder($context->getId())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function isPendingReviewsReminderDue(int $contextId): bool
+    {
+        $lastSentAt = $this->getSetting($contextId, self::PENDING_REVIEWS_REMINDER_LAST_SENT_AT);
+        if (!$lastSentAt) {
+            return Carbon::now()->isMonday();
+        }
+
+        return Carbon::parse($lastSentAt)->lt(Carbon::now()->startOfWeek(WeekDay::Monday));
     }
 
     public function getActions($request, $actionArgs)
@@ -107,7 +145,8 @@ class ReviewReminderPlugin extends GenericPlugin implements HasTaskScheduler
     {
         $scheduler
             ->addSchedule(new SendPendingReviewsReminder($this))
-            ->weeklyOn(1)
+            ->everyMinute()
+            ->when(fn () => $this->hasPendingReviewsReminderToSend())
             ->name(SendPendingReviewsReminder::class)
             ->withoutOverlapping();
     }

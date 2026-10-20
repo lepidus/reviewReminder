@@ -4,6 +4,7 @@ use APP\plugins\generic\reviewReminder\classes\mail\mailables\PendingReviewsRemi
 use APP\plugins\generic\reviewReminder\classes\tasks\SendPendingReviewsReminder;
 use APP\plugins\generic\reviewReminder\ReviewReminderPlugin;
 use APP\facades\Repo;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use PKP\core\PKPApplication;
@@ -38,6 +39,10 @@ class SendPendingReviewsReminderTest extends PKPTestCase
     private const SUBMISSION_IDS_UNDER_REVIEW = [7, 12, 20];
     private const PENDING_REVIEWS_REMINDER_MESSAGE = 'plugins.generic.reviewReminder.event.pendingReviewsReminderSent';
     private const WEEKLY_REMINDER_SETTING = 'pendingReviewsReminderEnabled';
+    private const LAST_SENT_SETTING = 'pendingReviewsReminderLastSentAt';
+    private const PREVIOUS_MONDAY_MIDNIGHT = '2026-10-12 00:00:00';
+    private const MONDAY_MIDNIGHT = '2026-10-19 00:00:00';
+    private const WEDNESDAY_AFTERNOON = '2026-10-21 15:00:00';
 
     private $pluginSettingsDao;
     private $secondContextId;
@@ -47,6 +52,8 @@ class SendPendingReviewsReminderTest extends PKPTestCase
     private $lastEventLogIdBeforeTest;
     private $enabledSettingBeforeTest;
     private $weeklyReminderSettingBeforeTest;
+    private $lastSentSettingBeforeTest;
+    private $mailManagerBeforeTest;
 
     protected function setUp(): void
     {
@@ -54,8 +61,12 @@ class SendPendingReviewsReminderTest extends PKPTestCase
         $this->pluginSettingsDao = DAORegistry::getDAO('PluginSettingsDAO');
         $this->enabledSettingBeforeTest = $this->getPluginSetting(self::FIRST_CONTEXT_ID, 'enabled');
         $this->weeklyReminderSettingBeforeTest = $this->getPluginSetting(self::FIRST_CONTEXT_ID, self::WEEKLY_REMINDER_SETTING);
+        $this->lastSentSettingBeforeTest = $this->getPluginSetting(self::FIRST_CONTEXT_ID, self::LAST_SENT_SETTING);
+        $this->pluginSettingsDao->deleteSetting(self::FIRST_CONTEXT_ID, self::PLUGIN_NAME, self::LAST_SENT_SETTING);
+        Carbon::setTestNow(self::MONDAY_MIDNIGHT);
         $this->lastEventLogIdBeforeTest = DB::table('event_log')->max('log_id');
         Locale::registerPath('plugins/generic/reviewReminder/locale');
+        $this->mailManagerBeforeTest = Mail::isFake() ? Mail::getFacadeRoot()->manager : Mail::getFacadeRoot();
         Mail::fake();
     }
 
@@ -63,6 +74,9 @@ class SendPendingReviewsReminderTest extends PKPTestCase
     {
         $this->restorePluginSetting(self::FIRST_CONTEXT_ID, 'enabled', $this->enabledSettingBeforeTest);
         $this->restorePluginSetting(self::FIRST_CONTEXT_ID, self::WEEKLY_REMINDER_SETTING, $this->weeklyReminderSettingBeforeTest);
+        $this->restorePluginSetting(self::FIRST_CONTEXT_ID, self::LAST_SENT_SETTING, $this->lastSentSettingBeforeTest);
+        Carbon::setTestNow();
+        Mail::swap($this->mailManagerBeforeTest);
 
         if ($this->secondContextId) {
             $this->pluginSettingsDao->deleteSetting($this->secondContextId, self::PLUGIN_NAME, 'enabled');
@@ -99,7 +113,8 @@ class SendPendingReviewsReminderTest extends PKPTestCase
     private function restorePluginSetting(int $contextId, string $settingName, ?object $setting): void
     {
         if ($setting) {
-            $this->pluginSettingsDao->updateSetting($contextId, self::PLUGIN_NAME, $settingName, (bool) $setting->setting_value, 'bool');
+            $value = $setting->setting_type === 'bool' ? (bool) $setting->setting_value : $setting->setting_value;
+            $this->pluginSettingsDao->updateSetting($contextId, self::PLUGIN_NAME, $settingName, $value, $setting->setting_type);
             return;
         }
 
@@ -114,6 +129,11 @@ class SendPendingReviewsReminderTest extends PKPTestCase
     private function disablePlugin(int $contextId): void
     {
         $this->pluginSettingsDao->updateSetting($contextId, self::PLUGIN_NAME, 'enabled', false, 'bool');
+    }
+
+    private function setLastWeeklyReminder(int $contextId, string $dateTime): void
+    {
+        $this->pluginSettingsDao->updateSetting($contextId, self::PLUGIN_NAME, self::LAST_SENT_SETTING, $dateTime, 'string');
     }
 
     private function setWeeklyReminderEnabled(int $contextId, ?bool $isEnabled): void
@@ -232,6 +252,60 @@ class SendPendingReviewsReminderTest extends PKPTestCase
         $this->runTask();
 
         Mail::assertSent(PendingReviewsReminder::class);
+    }
+
+    public function testShouldNotRemindAgainInTheSameWeek(): void
+    {
+        $this->enablePlugin(self::FIRST_CONTEXT_ID);
+        $this->setLastWeeklyReminder(self::FIRST_CONTEXT_ID, self::MONDAY_MIDNIGHT);
+        Carbon::setTestNow(self::WEDNESDAY_AFTERNOON);
+
+        $this->runTask();
+
+        Mail::assertNotSent(PendingReviewsReminder::class);
+    }
+
+    public function testShouldRemindOnTheFirstRunOfTheWeekAfterThePreviousReminder(): void
+    {
+        $this->enablePlugin(self::FIRST_CONTEXT_ID);
+        $this->setLastWeeklyReminder(self::FIRST_CONTEXT_ID, self::PREVIOUS_MONDAY_MIDNIGHT);
+        Carbon::setTestNow(self::WEDNESDAY_AFTERNOON);
+
+        $this->runTask();
+
+        Mail::assertSent(PendingReviewsReminder::class);
+    }
+
+    public function testShouldWaitForMondayBeforeTheFirstWeeklyReminder(): void
+    {
+        $this->enablePlugin(self::FIRST_CONTEXT_ID);
+        Carbon::setTestNow(self::WEDNESDAY_AFTERNOON);
+
+        $this->runTask();
+
+        Mail::assertNotSent(PendingReviewsReminder::class);
+    }
+
+    public function testShouldRecordWhenTheWeeklyReminderWasSent(): void
+    {
+        $this->enablePlugin(self::FIRST_CONTEXT_ID);
+
+        $this->runTask();
+
+        $this->assertEquals(self::MONDAY_MIDNIGHT, (new ReviewReminderPlugin())->getSetting(self::FIRST_CONTEXT_ID, self::LAST_SENT_SETTING));
+    }
+
+    public function testShouldNotRetryTheWeeklyReminderInTheSameWeekAfterSendingFails(): void
+    {
+        $this->enablePlugin(self::FIRST_CONTEXT_ID);
+        Mail::shouldReceive('send')->andThrow(new TransportException('Connection refused'));
+
+        try {
+            $this->runTask();
+        } catch (TransportException $exception) {
+        }
+
+        $this->assertEquals(self::MONDAY_MIDNIGHT, (new ReviewReminderPlugin())->getSetting(self::FIRST_CONTEXT_ID, self::LAST_SENT_SETTING));
     }
 
     public function testShouldSendRemindersToReviewersOfContextWherePluginIsEnabled(): void

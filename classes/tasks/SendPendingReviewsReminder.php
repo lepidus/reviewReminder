@@ -28,9 +28,10 @@ class SendPendingReviewsReminder extends ScheduledTask
         $reminderActivityLog = new ReminderActivityLog();
 
         while ($context = $contexts->next()) {
-            if (!$this->plugin->getEnabled($context->getId()) || !$this->plugin->isPendingReviewsReminderEnabled($context->getId())) {
+            if (!$this->plugin->shouldSendPendingReviewsReminder($context->getId())) {
                 continue;
             }
+            $this->plugin->recordPendingReviewsReminder($context->getId());
 
             $submissions = [];
             $pendingReviewsByReviewer = [];
