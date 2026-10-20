@@ -13,7 +13,7 @@
 <version>
 	<application>reviewReminder</application>
 	<type>plugins.generic</type>
-	<release>0.2.0.3</release>
-	<date>2026-10-16</date>
+	<release>0.3.0.0</release>
+	<date>2026-10-20</date>
 	<class>ReviewReminderPlugin</class>
 </version>
