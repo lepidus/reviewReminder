@@ -35,6 +35,7 @@ class ReviewHistoryTest extends PKPTestCase
     private $templateManager;
     private $router;
     private $fetchHooksBeforeTest;
+    private $enabledSettingBeforeTest;
 
     protected function getMockedRegistryKeys(): array
     {
@@ -45,6 +46,11 @@ class ReviewHistoryTest extends PKPTestCase
     {
         parent::setUp();
         $this->pluginSettingsDao = DAORegistry::getDAO('PluginSettingsDAO');
+        $this->enabledSettingBeforeTest = DB::table('plugin_settings')
+            ->where('plugin_name', self::PLUGIN_NAME)
+            ->where('context_id', self::CONTEXT_ID)
+            ->where('setting_name', 'enabled')
+            ->first();
         $this->pluginSettingsDao->updateSetting(self::CONTEXT_ID, self::PLUGIN_NAME, 'enabled', true, 'bool');
         $this->lastEventLogIdBeforeTest = DB::table('event_log')->max('log_id');
 
@@ -62,11 +68,21 @@ class ReviewHistoryTest extends PKPTestCase
         DB::table('event_log_settings')->whereIn('log_id', $createdEventLogIds)->delete();
         DB::table('event_log')->whereIn('log_id', $createdEventLogIds)->delete();
 
-        $this->pluginSettingsDao->deleteSetting(self::CONTEXT_ID, self::PLUGIN_NAME, 'enabled');
+        $this->restoreEnabledSetting();
         $hooks = &Hook::getHooks();
         $hooks['TemplateManager::fetch'] = $this->fetchHooksBeforeTest;
 
         parent::tearDown();
+    }
+
+    private function restoreEnabledSetting(): void
+    {
+        if ($this->enabledSettingBeforeTest) {
+            $this->pluginSettingsDao->updateSetting(self::CONTEXT_ID, self::PLUGIN_NAME, 'enabled', (bool) $this->enabledSettingBeforeTest->setting_value, 'bool');
+            return;
+        }
+
+        $this->pluginSettingsDao->deleteSetting(self::CONTEXT_ID, self::PLUGIN_NAME, 'enabled');
     }
 
     private function createReviewHistoryRequest()

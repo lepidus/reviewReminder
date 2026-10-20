@@ -35,18 +35,20 @@ class SendPendingReviewsReminderTest extends PKPTestCase
     private $declinedSubmissionId;
     private $newReviewRoundId;
     private $lastEventLogIdBeforeTest;
+    private $enabledSettingBeforeTest;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->pluginSettingsDao = DAORegistry::getDAO('PluginSettingsDAO');
+        $this->enabledSettingBeforeTest = $this->getEnabledSetting(self::FIRST_CONTEXT_ID);
         $this->lastEventLogIdBeforeTest = DB::table('event_log')->max('log_id');
         Mail::fake();
     }
 
     protected function tearDown(): void
     {
-        $this->pluginSettingsDao->deleteSetting(self::FIRST_CONTEXT_ID, self::PLUGIN_NAME, 'enabled');
+        $this->restoreEnabledSetting(self::FIRST_CONTEXT_ID, $this->enabledSettingBeforeTest);
 
         if ($this->secondContextId) {
             $this->pluginSettingsDao->deleteSetting($this->secondContextId, self::PLUGIN_NAME, 'enabled');
@@ -71,9 +73,33 @@ class SendPendingReviewsReminderTest extends PKPTestCase
         parent::tearDown();
     }
 
+    private function getEnabledSetting(int $contextId): ?object
+    {
+        return DB::table('plugin_settings')
+            ->where('plugin_name', self::PLUGIN_NAME)
+            ->where('context_id', $contextId)
+            ->where('setting_name', 'enabled')
+            ->first();
+    }
+
+    private function restoreEnabledSetting(int $contextId, ?object $enabledSetting): void
+    {
+        if ($enabledSetting) {
+            $this->pluginSettingsDao->updateSetting($contextId, self::PLUGIN_NAME, 'enabled', (bool) $enabledSetting->setting_value, 'bool');
+            return;
+        }
+
+        $this->pluginSettingsDao->deleteSetting($contextId, self::PLUGIN_NAME, 'enabled');
+    }
+
     private function enablePlugin(int $contextId): void
     {
         $this->pluginSettingsDao->updateSetting($contextId, self::PLUGIN_NAME, 'enabled', true, 'bool');
+    }
+
+    private function disablePlugin(int $contextId): void
+    {
+        $this->pluginSettingsDao->updateSetting($contextId, self::PLUGIN_NAME, 'enabled', false, 'bool');
     }
 
     private function createSecondContextWithSharedReviewer(): void
@@ -156,6 +182,8 @@ class SendPendingReviewsReminderTest extends PKPTestCase
 
     public function testShouldNotSendRemindersFromContextWherePluginIsDisabled(): void
     {
+        $this->disablePlugin(self::FIRST_CONTEXT_ID);
+
         $this->runTask();
 
         Mail::assertNotSent(PendingReviewsReminder::class);
