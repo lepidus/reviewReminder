@@ -7,7 +7,6 @@ use APP\facades\Repo;
 use APP\journal\Journal;
 use APP\plugins\generic\reviewReminder\lib\ICS;
 use APP\submission\Submission;
-use PKP\config\Config;
 use PKP\submission\reviewAssignment\ReviewAssignment;
 
 class ReviewReminderService
@@ -32,26 +31,25 @@ class ReviewReminderService
 
     private function createICalendar(): ICS
     {
-        $timeZone = new \DateTimeZone(Config::getVar('general', 'time_zone'));
-        $reviewDueDateTime = new \DateTime($this->reviewAssignment->getDateDue(), $timeZone);
-        $reviewDueDateTime->setTime(23, 59, 59);
-        $formattedReviewDueDate = $reviewDueDateTime->format('Ymd\THis\Z');
+        $submissionTitle = $this->escapeICalendarTitle($this->submission->getCurrentPublication()->getLocalizedTitle());
+        $reviewDueDate = new \DateTimeImmutable($this->reviewAssignment->getDateDue());
 
         $ics = new ICS([
             'description' => __(
                 'plugins.generic.reviewReminder.ics.description',
                 [
-                    'submissionTitle' => $this->escapeICalendarTitle(
-                        $this->submission->getCurrentPublication()->getLocalizedTitle()
-                    ),
+                    'submissionTitle' => $submissionTitle,
                     'submissionReviewUrl' => $this->reviewUrl ?? $this->getReviewUrl()
                 ]
             ),
-            'dtstart' => 'now',
-            'dtend' => $formattedReviewDueDate,
+            'dtstart' => $reviewDueDate->format('Y-m-d'),
+            'dtend' => $reviewDueDate->modify('+1 day')->format('Y-m-d'),
             'summary' => __(
                 'plugins.generic.reviewReminder.ics.summary',
-                ['journalName' => $this->context->getLocalizedName()]
+                [
+                    'submissionTitle' => $submissionTitle,
+                    'journalName' => $this->context->getLocalizedName()
+                ]
             ),
             'organizer' => $this->context->getLocalizedName() . ':mailto:' . $this->context->getData('contactEmail'),
         ]);
