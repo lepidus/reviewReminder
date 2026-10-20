@@ -64,8 +64,9 @@ Importing the event is optional and does not accept the invitation. The plugin s
 3. Enable **Review Reminder** in each journal that needs it.
 4. Make sure OJS can send emails and that the scheduler is configured.
 
-The links in the attachment and in the weekly reminder go to the review page and ask the reviewer to sign in, even when **One-click Reviewer Access** is enabled in **Workflow > Review > Setup**. That option only changes the link in the body of the OJS emails.
+Optionally, enable **One-click Reviewer Access** in **Workflow > Review > Setup**. The attachment then uses the same one-click link as the OJS email, so it opens the review without signing in. Links in the weekly reminder always ask the reviewer to sign in.
 
+![How to enable One-click Reviewer Access](https://i.imgur.com/cHjoXsI.gif)
 
 Disabling the plugin in a journal stops adding the attachment to future emails and removes the journal from future weekly reminders. Reviews, deadlines, and already imported events are not changed.
 

@@ -53,7 +53,7 @@ class HookCallbacks
             return Hook::CONTINUE;
         }
 
-        $reviewUrl = $mailable->viewData[ReviewAssignmentEmailVariable::REVIEW_ASSIGNMENT_URL] ?? null;
+        $reviewUrl = $mailable->buildViewData()[ReviewAssignmentEmailVariable::REVIEW_ASSIGNMENT_URL] ?? null;
         $reviewReminderService = new ReviewReminderService($context, $reviewAssignment, $reviewUrl);
 
         $mailable->attachData(

@@ -64,8 +64,9 @@ Importar el evento es opcional y no acepta la invitación. El plugin no define a
 3. Active **Review Reminder** en cada revista que lo necesite.
 4. Compruebe que OJS envía correos y que el programador está configurado.
 
-Los enlaces del adjunto y del recordatorio semanal llevan a la página de revisión y piden al revisor iniciar sesión, incluso con el **Acceso del revisor con un clic** habilitado en **Flujo de trabajo > Revisión > Configuración**. Esa opción solo cambia el enlace en el cuerpo de los correos de OJS.
+Opcionalmente, habilite el **Acceso del revisor con un clic** en **Flujo de trabajo > Revisión > Configuración**. Así, el adjunto usa el mismo enlace de un clic del correo de OJS y abre la revisión sin iniciar sesión. Los enlaces del recordatorio semanal siempre piden al revisor iniciar sesión.
 
+![Cómo habilitar el acceso del revisor con un clic](https://i.imgur.com/cHjoXsI.gif)
 
 Al desactivar el plugin en una revista, los próximos correos dejan de llevar el adjunto y la revista sale de los próximos recordatorios semanales. Las revisiones, los plazos y los eventos ya importados no se modifican.
 

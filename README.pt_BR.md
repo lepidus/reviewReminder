@@ -64,8 +64,9 @@ Importar o evento é opcional e não aceita o convite. O plugin não define alar
 3. Ative o **Review Reminder** em cada revista que precisar dele.
 4. Confirme que o OJS envia emails e que o agendador está configurado.
 
-Os links do anexo e do lembrete semanal levam à página de avaliação e pedem login ao avaliador, mesmo com o **Acesso do avaliador com um clique** habilitado em **Fluxo de trabalho > Avaliação > Configuração**. Essa opção muda apenas o link no corpo dos emails do OJS.
+Opcionalmente, habilite o **Acesso do avaliador com um clique** em **Fluxo de trabalho > Avaliação > Configuração**. Assim, o anexo usa o mesmo link de um clique do email do OJS e abre a avaliação sem login. Os links do lembrete semanal sempre pedem login ao avaliador.
 
+![Como habilitar o acesso do avaliador com um clique](https://i.imgur.com/cHjoXsI.gif)
 
 Ao desativar o plugin em uma revista, os próximos emails deixam de levar o anexo e a revista sai dos próximos lembretes semanais. Avaliações, prazos e eventos já importados não são alterados.
 
