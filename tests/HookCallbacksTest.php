@@ -26,6 +26,7 @@ class HookCallbacksTest extends PKPTestCase
     private const NAMESAKE_CALENDAR_END = 'DTEND:20270420T235959';
     private const INJECTED_CALENDAR_PROPERTY = 'X-INJECTED-PROPERTY:injected';
     private const ONE_CLICK_REVIEW_URL = 'http://localhost/index.php/publicknowledge/invitation/accept?id=1&key=oneClickKey';
+    private const CALENDAR_EVENT_NAME = 'SUMMARY:Review deadline: Developing efficacy beliefs in the classroom (Journal of Public Knowledge)';
 
     private $newReviewRoundId;
     private $newReviewAssignmentId;
@@ -236,5 +237,12 @@ class HookCallbacksTest extends PKPTestCase
         $mailable = $this->sendReviewRequest(Repo::reviewAssignment()->get(self::REVIEW_ASSIGNMENT_ID), self::ONE_CLICK_REVIEW_URL);
 
         $this->assertStringContainsString(self::ONE_CLICK_REVIEW_URL, $this->getCalendarInvite($mailable));
+    }
+
+    public function testShouldNameCalendarEventAfterTheReviewedSubmissionAndJournal(): void
+    {
+        $mailable = $this->sendReviewRequest(Repo::reviewAssignment()->get(self::REVIEW_ASSIGNMENT_ID));
+
+        $this->assertContains(self::CALENDAR_EVENT_NAME, explode("\r\n", $this->getCalendarInvite($mailable)));
     }
 }

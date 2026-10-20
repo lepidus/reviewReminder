@@ -50,7 +50,7 @@ Sem o cron, o OJS usa o executor integrado (`task_runner` em `config.inc.php`), 
 
 ## Anexo de calendário
 
-O arquivo `invite.ics` contém um evento com o nome da revista, o título da submissão e o link para a página de avaliação. O evento vai do envio do email até as 23:59:59 do **prazo de conclusão da avaliação**, no fuso horário do aplicativo de calendário do avaliador.
+O arquivo `invite.ics` contém um evento com o título "Prazo de avaliação: <título da submissão> (<nome da revista>)" e, na descrição, o link para a página de avaliação. O evento vai do envio do email até as 23:59:59 do **prazo de conclusão da avaliação**, no fuso horário do aplicativo de calendário do avaliador.
 
 Importar o evento é opcional e não aceita o convite. O plugin não define alarmes nem atualiza o evento se o prazo mudar. O anexo não é adicionado aos lembretes automáticos de atraso do OJS.
 

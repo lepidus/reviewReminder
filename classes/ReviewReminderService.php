@@ -32,6 +32,7 @@ class ReviewReminderService
 
     private function createICalendar(): ICS
     {
+        $submissionTitle = $this->escapeICalendarTitle($this->submission->getCurrentPublication()->getLocalizedTitle());
         $timeZone = new \DateTimeZone(Config::getVar('general', 'time_zone'));
         $reviewDueDateTime = new \DateTime($this->reviewAssignment->getDateDue(), $timeZone);
         $reviewDueDateTime->setTime(23, 59, 59);
@@ -41,9 +42,7 @@ class ReviewReminderService
             'description' => __(
                 'plugins.generic.reviewReminder.ics.description',
                 [
-                    'submissionTitle' => $this->escapeICalendarTitle(
-                        $this->submission->getCurrentPublication()->getLocalizedTitle()
-                    ),
+                    'submissionTitle' => $submissionTitle,
                     'submissionReviewUrl' => $this->reviewUrl ?? $this->getReviewUrl()
                 ]
             ),
@@ -51,7 +50,10 @@ class ReviewReminderService
             'dtend' => $formattedReviewDueDate,
             'summary' => __(
                 'plugins.generic.reviewReminder.ics.summary',
-                ['journalName' => $this->context->getLocalizedName()]
+                [
+                    'submissionTitle' => $submissionTitle,
+                    'journalName' => $this->context->getLocalizedName()
+                ]
             ),
             'organizer' => $this->context->getLocalizedName() . ':mailto:' . $this->context->getData('contactEmail'),
         ]);

@@ -8,7 +8,7 @@ msgid "plugins.generic.reviewReminder.ics.description"
 msgstr "Prazo para avaliação de {$submissionTitle}: {$submissionReviewUrl}"
 
 msgid "plugins.generic.reviewReminder.ics.summary"
-msgstr "{$journalName} - Agende sua avaliação"
+msgstr "Prazo de avaliação: {$submissionTitle} ({$journalName})"
 
 msgid "plugins.generic.reviewReminder.reviewDueDate"
 msgstr "Data limite: {$reviewDueDate}"
