@@ -14,14 +14,20 @@
 
 namespace APP\plugins\generic\reviewReminder;
 
+use PKP\core\JSONMessage;
+use PKP\linkAction\LinkAction;
+use PKP\linkAction\request\AjaxModal;
 use PKP\plugins\GenericPlugin;
 use PKP\plugins\Hook;
 use Illuminate\Support\Facades\DB;
 use APP\plugins\generic\reviewReminder\classes\HookCallbacks;
 use APP\plugins\generic\reviewReminder\classes\ReviewHistory;
+use APP\plugins\generic\reviewReminder\classes\ReviewReminderSettingsForm;
 
 class ReviewReminderPlugin extends GenericPlugin
 {
+    public const PENDING_REVIEWS_REMINDER_ENABLED = 'pendingReviewsReminderEnabled';
+
     public function register($category, $path, $mainContextId = null)
     {
         $success = parent::register($category, $path, $mainContextId);
@@ -47,6 +53,51 @@ class ReviewReminderPlugin extends GenericPlugin
     public function getDescription()
     {
         return __('plugins.generic.reviewReminder.description');
+    }
+
+    public function isPendingReviewsReminderEnabled($contextId)
+    {
+        return (bool) ($this->getSetting($contextId, self::PENDING_REVIEWS_REMINDER_ENABLED) ?? true);
+    }
+
+    public function getActions($request, $actionArgs)
+    {
+        $router = $request->getRouter();
+        return array_merge(
+            $this->getEnabled() ? [
+                new LinkAction(
+                    'settings',
+                    new AjaxModal(
+                        $router->url($request, null, null, 'manage', null, ['verb' => 'settings', 'plugin' => $this->getName(), 'category' => 'generic']),
+                        $this->getDisplayName()
+                    ),
+                    __('manager.plugins.settings'),
+                    null
+                ),
+            ] : [],
+            parent::getActions($request, $actionArgs)
+        );
+    }
+
+    public function manage($args, $request)
+    {
+        if ($request->getUserVar('verb') !== 'settings') {
+            return parent::manage($args, $request);
+        }
+
+        $form = new ReviewReminderSettingsForm($this, $request->getContext()->getId());
+        if (!$request->getUserVar('save')) {
+            $form->initData();
+            return new JSONMessage(true, $form->fetch($request));
+        }
+
+        $form->readInputData();
+        if (!$form->validate()) {
+            return new JSONMessage(true, $form->fetch($request));
+        }
+
+        $form->execute();
+        return new JSONMessage(true);
     }
 
     public function getInstallEmailTemplatesFile()
