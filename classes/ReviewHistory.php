@@ -11,9 +11,13 @@ use PKP\plugins\Hook;
 class ReviewHistory
 {
     private const CORE_TEMPLATE = 'workflow/reviewHistory.tpl';
-    private const REMINDER_LOCALE_KEY = 'common.reminder';
+    private const REMINDER_LOCALE_KEYS = [
+        ReminderActivityLog::PENDING_REVIEWS_REMINDER_MESSAGE => 'plugins.generic.reviewReminder.history.pendingReviewsReminder',
+        ReminderActivityLog::REVIEW_REMINDER_MESSAGE => 'plugins.generic.reviewReminder.history.reviewReminder',
+    ];
 
     private $plugin;
+    private $isFetchingCoreTemplate = false;
 
     public function __construct(ReviewReminderPlugin $plugin)
     {
@@ -22,11 +26,10 @@ class ReviewHistory
 
     public function addReminders($hookName, $args)
     {
-        $templateManager = $args[0];
-        $template = $args[1];
+        [$templateManager, $template, $cacheId, $compileId] = $args;
         $output = &$args[4];
 
-        if ($template !== self::CORE_TEMPLATE) {
+        if ($template !== self::CORE_TEMPLATE || $this->isFetchingCoreTemplate) {
             return Hook::CONTINUE;
         }
 
@@ -40,27 +43,34 @@ class ReviewHistory
             return Hook::CONTINUE;
         }
 
-        $templateManager->assign('reviewHistoryEntries', $this->getHistoryEntries($templateManager->getTemplateVars('dates') ?? [], $reviewAssignment));
-        $output = $templateManager->fetch($this->plugin->getTemplateResource('reviewHistory.tpl'));
+        $reminders = (new ReminderActivityLog())->getReminders($reviewAssignment);
+        if (empty($reminders)) {
+            return Hook::CONTINUE;
+        }
+
+        $output = $this->fetchCoreTemplate($templateManager, $cacheId, $compileId)
+            . $this->fetchReminders($templateManager, $reminders);
 
         return Hook::ABORT;
     }
 
-    private function getHistoryEntries($reviewAssignmentDates, $reviewAssignment)
+    private function fetchCoreTemplate($templateManager, $cacheId, $compileId)
     {
-        $entries = [];
-        foreach ($reviewAssignmentDates as $localeKey => $date) {
-            if ($date) {
-                $entries[] = ['date' => $date, 'localeKey' => $localeKey];
-            }
+        $this->isFetchingCoreTemplate = true;
+        try {
+            return $templateManager->fetch(self::CORE_TEMPLATE, $cacheId, $compileId);
+        } finally {
+            $this->isFetchingCoreTemplate = false;
         }
+    }
 
-        foreach ((new ReminderActivityLog())->getReminderDates($reviewAssignment) as $date) {
-            $entries[] = ['date' => $date, 'localeKey' => self::REMINDER_LOCALE_KEY];
-        }
-
-        usort($entries, fn ($entry, $otherEntry) => strtotime($entry['date']) <=> strtotime($otherEntry['date']));
-
-        return $entries;
+    private function fetchReminders($templateManager, $reminders)
+    {
+        $reviewReminderEntries = array_map(
+            fn ($reminder) => ['date' => $reminder->date, 'localeKey' => self::REMINDER_LOCALE_KEYS[$reminder->message]],
+            $reminders
+        );
+        $templateManager->assign('reviewReminderEntries', $reviewReminderEntries);
+        return $templateManager->fetch($this->plugin->getTemplateResource('reviewHistory.tpl'));
     }
 }

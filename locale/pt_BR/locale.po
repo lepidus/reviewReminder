@@ -21,3 +21,9 @@ msgstr "O plugin Review Reminder enviou o lembrete semanal de avaliações pende
 
 msgid "plugins.generic.reviewReminder.event.reviewReminderSent"
 msgstr "O plugin Review Reminder enviou a {$recipientName} um lembrete com o convite de calendário da avaliação"
+
+msgid "plugins.generic.reviewReminder.history.pendingReviewsReminder"
+msgstr "Lembrete semanal de avaliações pendentes"
+
+msgid "plugins.generic.reviewReminder.history.reviewReminder"
+msgstr "Lembrete com convite de calendário"

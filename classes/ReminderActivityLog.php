@@ -32,7 +32,7 @@ class ReminderActivityLog
         Repo::eventLog()->add($eventLog);
     }
 
-    public function getReminderDates(ReviewAssignment $reviewAssignment): array
+    public function getReminders(ReviewAssignment $reviewAssignment): array
     {
         return DB::table('event_log as e')
             ->join('event_log_settings as s', 's.log_id', '=', 'e.log_id')
@@ -43,7 +43,8 @@ class ReminderActivityLog
             ->where('s.setting_name', 'reviewAssignmentId')
             ->where('s.setting_value', (string) $reviewAssignment->getId())
             ->orderBy('e.date_logged')
-            ->pluck('e.date_logged')
+            ->orderBy('e.log_id')
+            ->get(['e.date_logged as date', 'e.message'])
             ->all();
     }
 }

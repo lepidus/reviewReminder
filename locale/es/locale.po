@@ -21,3 +21,9 @@ msgstr "El plugin Review Reminder envió el recordatorio semanal de revisiones p
 
 msgid "plugins.generic.reviewReminder.event.reviewReminderSent"
 msgstr "El plugin Review Reminder envió a {$recipientName} un recordatorio con la invitación de calendario de la revisión"
+
+msgid "plugins.generic.reviewReminder.history.pendingReviewsReminder"
+msgstr "Recordatorio semanal de revisiones pendientes"
+
+msgid "plugins.generic.reviewReminder.history.reviewReminder"
+msgstr "Recordatorio con invitación de calendario"

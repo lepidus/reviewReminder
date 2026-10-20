@@ -56,6 +56,6 @@ describe('Send Review Reminder', function () {
         cy.findSubmission('active', submissionTitle);
         cy.contains('tr', 'Adela Gallego').find('a.show_extras').click();
         cy.contains('tr', 'Adela Gallego').next('tr').contains('a', 'History').click();
-        cy.get('.pkp_review_history').contains('Reminder');
+        cy.get('.pkp_review_history').contains('Reminder with calendar invitation');
     });
 });
