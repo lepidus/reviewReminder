@@ -24,3 +24,9 @@ msgstr "Recordatorio semanal de revisiones pendientes"
 
 msgid "plugins.generic.reviewReminder.history.reviewReminder"
 msgstr "Recordatorio con invitación de calendario"
+
+msgid "plugins.generic.reviewReminder.settings.pendingReviewsReminder"
+msgstr "Enviar el recordatorio semanal de revisiones pendientes"
+
+msgid "plugins.generic.reviewReminder.settings.pendingReviewsReminder.description"
+msgstr "Cada lunes, cada revisor con revisiones pendientes en esta revista recibe un correo con la lista y sus plazos."
