@@ -16,3 +16,5 @@ msgstr "{$journalName} - Agende sua avaliação"
 msgid "plugins.generic.reviewReminder.reviewDueDate"
 msgstr "Data limite: {$reviewDueDate}"
 
+msgid "plugins.generic.reviewReminder.event.pendingReviewsReminderSent"
+msgstr "O plugin Review Reminder enviou o lembrete semanal de avaliações pendentes para {$recipientName}"

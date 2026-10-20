@@ -12,7 +12,7 @@ use PKP\user\User;
 
 class ReminderActivityLog
 {
-    private const REMINDER_MESSAGE = 'submission.event.reviewer.reviewerRemindedAuto';
+    private const PENDING_REVIEWS_REMINDER_MESSAGE = 'plugins.generic.reviewReminder.event.pendingReviewsReminderSent';
 
     public function recordReminder(ReviewAssignment $reviewAssignment, User $reviewer): void
     {
@@ -21,7 +21,7 @@ class ReminderActivityLog
             'assocId' => $reviewAssignment->getSubmissionId(),
             'eventType' => PKPSubmissionEventLogEntry::SUBMISSION_LOG_REVIEW_REMIND_AUTO,
             'userId' => null,
-            'message' => self::REMINDER_MESSAGE,
+            'message' => self::PENDING_REVIEWS_REMINDER_MESSAGE,
             'isTranslated' => false,
             'dateLogged' => Core::getCurrentDate(),
             'recipientId' => $reviewer->getId(),
@@ -38,7 +38,7 @@ class ReminderActivityLog
             ->where('e.assoc_type', PKPApplication::ASSOC_TYPE_SUBMISSION)
             ->where('e.assoc_id', $reviewAssignment->getSubmissionId())
             ->where('e.event_type', PKPSubmissionEventLogEntry::SUBMISSION_LOG_REVIEW_REMIND_AUTO)
-            ->where('e.message', self::REMINDER_MESSAGE)
+            ->where('e.message', self::PENDING_REVIEWS_REMINDER_MESSAGE)
             ->where('s.setting_name', 'reviewAssignmentId')
             ->where('s.setting_value', (string) $reviewAssignment->getId())
             ->orderBy('e.date_logged')

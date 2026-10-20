@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use PKP\core\PKPApplication;
 use PKP\db\DAORegistry;
+use PKP\facades\Locale;
 use PKP\log\event\PKPSubmissionEventLogEntry;
 use PKP\security\Role;
 use PKP\submission\PKPSubmission;
@@ -35,6 +36,7 @@ class SendPendingReviewsReminderTest extends PKPTestCase
     private const PUBLISHED_SUBMISSION_IDS = [1, 17];
     private const SUBMISSION_IDS_PAST_REVIEW_STAGE = [3, 5, 6, 9, 15, 19];
     private const SUBMISSION_IDS_UNDER_REVIEW = [7, 12, 20];
+    private const PENDING_REVIEWS_REMINDER_MESSAGE = 'plugins.generic.reviewReminder.event.pendingReviewsReminderSent';
 
     private $pluginSettingsDao;
     private $secondContextId;
@@ -50,6 +52,7 @@ class SendPendingReviewsReminderTest extends PKPTestCase
         $this->pluginSettingsDao = DAORegistry::getDAO('PluginSettingsDAO');
         $this->enabledSettingBeforeTest = $this->getEnabledSetting(self::FIRST_CONTEXT_ID);
         $this->lastEventLogIdBeforeTest = DB::table('event_log')->max('log_id');
+        Locale::registerPath('plugins/generic/reviewReminder/locale');
         Mail::fake();
     }
 
@@ -313,7 +316,23 @@ class SendPendingReviewsReminderTest extends PKPTestCase
             $reviewAssignment = Repo::reviewAssignment()->get($entry->getData('reviewAssignmentId'));
             $this->assertEquals($reviewAssignment->getReviewerId(), $entry->getData('recipientId'));
             $this->assertEquals($reviewAssignment->getSubmissionId(), $entry->getData('assocId'));
-            $this->assertEquals('submission.event.reviewer.reviewerRemindedAuto', $entry->getData('message'));
+            $this->assertEquals(self::PENDING_REVIEWS_REMINDER_MESSAGE, $entry->getData('message'));
+        }
+    }
+
+    public function testShouldDescribeRecordedReminderAsSentByThePlugin(): void
+    {
+        $this->enablePlugin(self::FIRST_CONTEXT_ID);
+
+        $this->runTask();
+
+        $recordedReminders = $this->getRecordedReminders();
+        $this->assertNotEmpty($recordedReminders);
+        foreach ($recordedReminders as $entry) {
+            $this->assertEquals(
+                'The Review Reminder plugin sent the weekly pending reviews reminder to ' . $entry->getData('recipientName'),
+                $entry->getTranslatedMessage('en')
+            );
         }
     }
 
