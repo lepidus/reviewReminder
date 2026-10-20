@@ -10,6 +10,7 @@ use PKP\core\Registry;
 use PKP\facades\Locale;
 use PKP\mail\Mailable;
 use PKP\mail\mailables\ReviewRequest;
+use PKP\mail\variables\ReviewAssignmentEmailVariable;
 use PKP\submission\reviewAssignment\ReviewAssignment;
 use PKP\tests\PKPTestCase;
 
@@ -24,12 +25,14 @@ class HookCallbacksTest extends PKPTestCase
     private const NAMESAKE_DUE_DATE = '2027-04-20 00:00:00';
     private const NAMESAKE_CALENDAR_END = 'DTEND:20270420T235959';
     private const INJECTED_CALENDAR_PROPERTY = 'X-INJECTED-PROPERTY:injected';
+    private const ONE_CLICK_REVIEW_URL = 'http://localhost/index.php/publicknowledge/invitation/accept?id=1&key=oneClickKey';
 
     private $newReviewRoundId;
     private $newReviewAssignmentId;
     private $originalNamesOfRenamedReviewer = [];
     private $originalNamesakeDueDate;
     private $originalSubmissionTitle;
+    private $viewDataCallbackBeforeTest;
 
     protected function getMockedRegistryKeys(): array
     {
@@ -41,6 +44,7 @@ class HookCallbacksTest extends PKPTestCase
         parent::setUp();
         Locale::registerPath('plugins/generic/reviewReminder/locale');
         $this->createContextRequest();
+        $this->viewDataCallbackBeforeTest = Mailable::$viewDataCallback;
     }
 
     protected function tearDown(): void
@@ -70,6 +74,8 @@ class HookCallbacksTest extends PKPTestCase
         if ($this->originalSubmissionTitle) {
             $this->updateSubmissionTitle($this->originalSubmissionTitle);
         }
+
+        Mailable::$viewDataCallback = $this->viewDataCallbackBeforeTest;
 
         parent::tearDown();
     }
@@ -155,7 +161,7 @@ class HookCallbacksTest extends PKPTestCase
         $this->updateSubmissionTitle("Injected title\r\n" . self::INJECTED_CALENDAR_PROPERTY);
     }
 
-    private function sendReviewRequest(ReviewAssignment $reviewAssignment): Mailable
+    private function sendReviewRequest(ReviewAssignment $reviewAssignment, ?string $oneClickReviewUrl = null): Mailable
     {
         $submission = Repo::submission()->get(self::SUBMISSION_ID);
         $context = app()->get('context')->get($submission->getData('contextId'));
@@ -164,6 +170,9 @@ class HookCallbacksTest extends PKPTestCase
         $mailable = new ReviewRequest($context, $submission, $reviewAssignment);
         $mailable->recipients([$reviewer]);
         $mailable->setData('en');
+        if ($oneClickReviewUrl) {
+            $mailable->buildViewDataUsing(fn () => [ReviewAssignmentEmailVariable::REVIEW_ASSIGNMENT_URL => $oneClickReviewUrl]);
+        }
 
         (new HookCallbacks())->attachCalendarInvite('Mailable::build', $mailable);
 
@@ -220,5 +229,12 @@ class HookCallbacksTest extends PKPTestCase
             fn (string $line) => str_starts_with($line, self::INJECTED_CALENDAR_PROPERTY)
         );
         $this->assertEmpty($injectedLines);
+    }
+
+    public function testShouldLinkCalendarInviteToOneClickReviewerAccessWhenEnabled(): void
+    {
+        $mailable = $this->sendReviewRequest(Repo::reviewAssignment()->get(self::REVIEW_ASSIGNMENT_ID), self::ONE_CLICK_REVIEW_URL);
+
+        $this->assertStringContainsString(self::ONE_CLICK_REVIEW_URL, $this->getCalendarInvite($mailable));
     }
 }

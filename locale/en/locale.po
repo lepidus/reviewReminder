@@ -18,3 +18,9 @@ msgstr "The Review Reminder plugin sent the weekly pending reviews reminder to {
 
 msgid "plugins.generic.reviewReminder.history.pendingReviewsReminder"
 msgstr "Weekly pending reviews reminder"
+
+msgid "plugins.generic.reviewReminder.settings.pendingReviewsReminder"
+msgstr "Send the weekly pending reviews reminder"
+
+msgid "plugins.generic.reviewReminder.settings.pendingReviewsReminder.description"
+msgstr "Every Monday, each reviewer with pending reviews in this journal receives one email listing them with their due dates."
