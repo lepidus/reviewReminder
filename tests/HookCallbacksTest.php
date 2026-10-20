@@ -27,6 +27,7 @@ class HookCallbacksTest extends PKPTestCase
     private const NEW_ROUND_DUE_DATE = '2027-03-15 00:00:00';
     private const NEW_ROUND_CALENDAR_END = 'DTEND:20270315T235959';
     private const INJECTED_CALENDAR_PROPERTY = 'X-INJECTED-PROPERTY:injected';
+    private const CALENDAR_EVENT_NAME = 'SUMMARY:Review deadline: Developing efficacy beliefs in the classroom (Journal of Public Knowledge)';
 
     private $reviewAssignmentDao;
     private $newReviewRoundId;
@@ -262,5 +263,12 @@ class HookCallbacksTest extends PKPTestCase
             $reminderDateBeforeAcceptance,
             DB::table('review_assignments')->where('review_id', $reviewAssignment->getId())->value('date_reminded')
         );
+    }
+
+    public function testShouldNameCalendarEventAfterTheAcceptedSubmissionAndJournal(): void
+    {
+        $this->confirmReview($this->getCurrentReviewAssignment(self::REVIEWER_ID));
+
+        $this->assertContains(self::CALENDAR_EVENT_NAME, explode("\r\n", $this->getSentReminder()->rawAttachments[0]['data']));
     }
 }
