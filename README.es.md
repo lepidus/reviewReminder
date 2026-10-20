@@ -31,7 +31,7 @@ Ejemplo del correo enviado cuando el revisor acepta la solicitud:
 >
 > También puede utilizar el recordatorio adjunto para añadir este evento al calendario que prefiera.
 
-El archivo `invite.ics` contiene un evento titulado "Plazo de revisión: <título del envío> (<nombre de la revista>)", que va desde el momento de la aceptación hasta las 23:59:59 del **plazo para completar la revisión**, en la zona horaria de la aplicación de calendario del revisor. La descripción del evento enlaza a la revisión. Cuando el **Acceso del revisor con un clic** está habilitado, ese enlace abre la revisión sin iniciar sesión. El plugin no define alarmas ni actualiza el evento si el plazo cambia.
+El archivo `invite.ics` contiene un evento titulado "Plazo de revisión: <título del envío> (<nombre de la revista>)", que ocupa todo el día del **plazo para completar la revisión**. La descripción del evento enlaza a la revisión. Cuando el **Acceso del revisor con un clic** está habilitado, ese enlace abre la revisión sin iniciar sesión. El plugin no define alarmas ni actualiza el evento si el plazo cambia.
 
 ## Recordatorio semanal
 
