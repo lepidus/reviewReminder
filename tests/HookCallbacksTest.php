@@ -243,7 +243,11 @@ class HookCallbacksTest extends PKPTestCase
         $this->assertCount(1, $recordedReminders);
         $this->assertEquals($reviewAssignment->getId(), $recordedReminders[0]->getData('reviewAssignmentId'));
         $this->assertEquals(self::REVIEWER_ID, $recordedReminders[0]->getData('recipientId'));
-        $this->assertEquals('submission.event.reviewer.reviewerRemindedAuto', $recordedReminders[0]->getData('message'));
+        $this->assertEquals('plugins.generic.reviewReminder.event.reviewReminderSent', $recordedReminders[0]->getData('message'));
+        $this->assertEquals(
+            'The Review Reminder plugin sent ' . $recordedReminders[0]->getData('recipientName') . " a reminder with the review's calendar invitation",
+            $recordedReminders[0]->getTranslatedMessage('en')
+        );
     }
 
     public function testShouldNotChangeReviewReminderDateWhenRecordingAcceptedReview(): void

@@ -56,7 +56,7 @@ class SendPendingReviewsReminder extends ScheduledTask
                 Mail::send($email);
 
                 foreach ($reviewerIncompleteReviews as $review) {
-                    $reminderActivityLog->recordReminder($review, $reviewer);
+                    $reminderActivityLog->recordReminder($review, $reviewer, ReminderActivityLog::PENDING_REVIEWS_REMINDER_MESSAGE);
                 }
             }
         }

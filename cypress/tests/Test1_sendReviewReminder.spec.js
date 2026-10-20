@@ -49,7 +49,7 @@ describe('Send Review Reminder', function () {
         cy.login('admin', 'admin', 'publicknowledge');
         cy.findSubmission('active', submissionTitle);
         cy.contains('button', 'Activity Log').click();
-        cy.contains('An automatic reminder email was sent to to Adela Gallego regarding their review assignment');
+        cy.contains("The Review Reminder plugin sent Adela Gallego a reminder with the review's calendar invitation");
     });
     it('Reminder is listed in the reviewer history', function () {
         cy.login('admin', 'admin', 'publicknowledge');

@@ -15,3 +15,9 @@ msgstr "{$journalName} - Schedule Your Review"
 
 msgid "plugins.generic.reviewReminder.reviewDueDate"
 msgstr "Due date: {$reviewDueDate}"
+
+msgid "plugins.generic.reviewReminder.event.pendingReviewsReminderSent"
+msgstr "The Review Reminder plugin sent the weekly pending reviews reminder to {$recipientName}"
+
+msgid "plugins.generic.reviewReminder.event.reviewReminderSent"
+msgstr "The Review Reminder plugin sent {$recipientName} a reminder with the review's calendar invitation"

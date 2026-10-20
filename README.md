@@ -8,7 +8,7 @@ This plugin sends a reminder to the reviewer's email address when they accept to
 
 Once a week, the plugin sends a reminder email to all reviewers. This email contains a list of all reviewer's incomplete reviews, with their due dates.
 
-Every reminder sent is recorded in the submission's *Activity Log* and listed in the reviewer's *History*, with the date and time it was sent.
+Every reminder sent by the plugin is recorded in the submission's *Activity Log* with a message identifying the Review Reminder plugin as its sender, and listed in the reviewer's *History*, with the date and time it was sent.
 
 ## Installation
 

@@ -134,7 +134,7 @@ class ReviewHistoryTest extends PKPTestCase
             'assocId' => self::SUBMISSION_ID,
             'eventType' => PKPSubmissionEventLogEntry::SUBMISSION_LOG_REVIEW_REMIND_AUTO,
             'userId' => null,
-            'message' => 'submission.event.reviewer.reviewerRemindedAuto',
+            'message' => 'plugins.generic.reviewReminder.event.pendingReviewsReminderSent',
             'isTranslated' => false,
             'dateLogged' => $dateLogged,
             'recipientId' => $reviewer->getId(),

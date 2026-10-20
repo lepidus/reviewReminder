@@ -51,7 +51,7 @@ class ReviewReminderService
 
         Mail::send($email);
 
-        (new ReminderActivityLog())->recordReminder($this->reviewAssignment, $this->reviewer);
+        (new ReminderActivityLog())->recordReminder($this->reviewAssignment, $this->reviewer, ReminderActivityLog::REVIEW_REMINDER_MESSAGE);
     }
 
     private function createICalendarContents()
