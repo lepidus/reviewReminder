@@ -50,7 +50,7 @@ Without cron, OJS uses its built-in runner (`task_runner` in `config.inc.php`), 
 
 ## Calendar attachment
 
-The `invite.ics` file contains an event titled "Review deadline: <submission title> (<journal name>)", with a link to the review page in its description. The event runs from the email sending until 23:59:59 on the **review completion deadline**, in the time zone of the reviewer's calendar app.
+The `invite.ics` file contains an event titled "Review deadline: <submission title> (<journal name>)", with a link to the review page in its description. It is an all-day event on the **review completion deadline**.
 
 Importing the event is optional and does not accept the invitation. The plugin sets no alarms and does not update the event if the deadline changes. The attachment is not added to OJS automatic overdue reminders.
 

@@ -21,9 +21,15 @@ class HookCallbacksTest extends PKPTestCase
     private const REVIEW_ASSIGNMENT_ID = 11;
     private const NAMESAKE_REVIEW_ASSIGNMENT_ID = 12;
     private const NEW_ROUND_DUE_DATE = '2027-03-15 00:00:00';
-    private const NEW_ROUND_CALENDAR_END = 'DTEND:20270315T235959';
+    private const NEW_ROUND_CALENDAR_START = 'DTSTART;VALUE=DATE:20270315';
     private const NAMESAKE_DUE_DATE = '2027-04-20 00:00:00';
-    private const NAMESAKE_CALENDAR_END = 'DTEND:20270420T235959';
+    private const NAMESAKE_CALENDAR_START = 'DTSTART;VALUE=DATE:20270420';
+    private const END_OF_MONTH_DUE_DATE = '2027-02-28 00:00:00';
+    private const END_OF_MONTH_CALENDAR_START = 'DTSTART;VALUE=DATE:20270228';
+    private const END_OF_MONTH_CALENDAR_END = 'DTEND;VALUE=DATE:20270301';
+    private const OVERDUE_DUE_DATE = '2020-01-10 00:00:00';
+    private const OVERDUE_CALENDAR_START = 'DTSTART;VALUE=DATE:20200110';
+    private const OVERDUE_CALENDAR_END = 'DTEND;VALUE=DATE:20200111';
     private const INJECTED_CALENDAR_PROPERTY = 'X-INJECTED-PROPERTY:injected';
     private const ONE_CLICK_REVIEW_URL = 'http://localhost/index.php/publicknowledge/invitation/accept?id=1&key=oneClickKey';
     private const CALENDAR_EVENT_NAME = 'SUMMARY:Review deadline: Developing efficacy beliefs in the classroom (Journal of Public Knowledge)';
@@ -96,7 +102,7 @@ class HookCallbacksTest extends PKPTestCase
         $request->setRouter($router);
     }
 
-    private function assignReviewerToNewReviewRound(ReviewAssignment $currentAssignment): ReviewAssignment
+    private function assignReviewerToNewReviewRound(ReviewAssignment $currentAssignment, string $dueDate = self::NEW_ROUND_DUE_DATE): ReviewAssignment
     {
         $this->newReviewRoundId = DB::table('review_rounds')->insertGetId([
             'submission_id' => self::SUBMISSION_ID,
@@ -108,7 +114,7 @@ class HookCallbacksTest extends PKPTestCase
         $newAssignment = clone $currentAssignment;
         $newAssignment->setReviewRoundId($this->newReviewRoundId);
         $newAssignment->setRound($currentAssignment->getRound() + 1);
-        $newAssignment->setDateDue(self::NEW_ROUND_DUE_DATE);
+        $newAssignment->setDateDue($dueDate);
         $newAssignment->setDateConfirmed(null);
         $this->newReviewAssignmentId = Repo::reviewAssignment()->dao->insert($newAssignment);
 
@@ -203,7 +209,7 @@ class HookCallbacksTest extends PKPTestCase
 
         $mailable = $this->sendReviewRequest($newRoundAssignment);
 
-        $this->assertStringContainsString(self::NEW_ROUND_CALENDAR_END, $this->getCalendarInvite($mailable));
+        $this->assertStringContainsString(self::NEW_ROUND_CALENDAR_START, $this->getCalendarInvite($mailable));
     }
 
     public function testShouldUseDueDateOfRequestedReviewerWhenAnotherReviewerHasTheSameName(): void
@@ -215,7 +221,7 @@ class HookCallbacksTest extends PKPTestCase
 
         $mailable = $this->sendReviewRequest(Repo::reviewAssignment()->get(self::NAMESAKE_REVIEW_ASSIGNMENT_ID));
 
-        $this->assertStringContainsString(self::NAMESAKE_CALENDAR_END, $this->getCalendarInvite($mailable));
+        $this->assertStringContainsString(self::NAMESAKE_CALENDAR_START, $this->getCalendarInvite($mailable));
     }
 
     public function testShouldKeepSubmissionTitleInsideCalendarInviteDescription(): void
@@ -244,5 +250,27 @@ class HookCallbacksTest extends PKPTestCase
         $mailable = $this->sendReviewRequest(Repo::reviewAssignment()->get(self::REVIEW_ASSIGNMENT_ID));
 
         $this->assertContains(self::CALENDAR_EVENT_NAME, explode("\r\n", $this->getCalendarInvite($mailable)));
+    }
+
+    public function testShouldPlaceCalendarEventOnTheReviewDueDateOnly(): void
+    {
+        $reviewAssignment = $this->assignReviewerToNewReviewRound(Repo::reviewAssignment()->get(self::REVIEW_ASSIGNMENT_ID), self::END_OF_MONTH_DUE_DATE);
+
+        $mailable = $this->sendReviewRequest($reviewAssignment);
+
+        $calendarLines = explode("\r\n", $this->getCalendarInvite($mailable));
+        $this->assertContains(self::END_OF_MONTH_CALENDAR_START, $calendarLines);
+        $this->assertContains(self::END_OF_MONTH_CALENDAR_END, $calendarLines);
+    }
+
+    public function testShouldPlaceCalendarEventOnTheDueDateOfAnOverdueReview(): void
+    {
+        $reviewAssignment = $this->assignReviewerToNewReviewRound(Repo::reviewAssignment()->get(self::REVIEW_ASSIGNMENT_ID), self::OVERDUE_DUE_DATE);
+
+        $mailable = $this->sendReviewRequest($reviewAssignment);
+
+        $calendarLines = explode("\r\n", $this->getCalendarInvite($mailable));
+        $this->assertContains(self::OVERDUE_CALENDAR_START, $calendarLines);
+        $this->assertContains(self::OVERDUE_CALENDAR_END, $calendarLines);
     }
 }
