@@ -31,7 +31,7 @@ Exemplo do email enviado quando o avaliador aceita a solicitação:
 >
 > Você também pode utilizar o lembrete em anexo para adicionar esse evento ao calendário de sua preferência.
 
-O arquivo `invite.ics` contém um evento que vai do momento do aceite até as 23:59:59 do **prazo de conclusão da avaliação**, no fuso horário do aplicativo de calendário do avaliador. A descrição do evento traz o link para a avaliação. Quando o **Acesso do avaliador com um clique** está habilitado, esse link abre a avaliação sem login. O plugin não define alarmes nem atualiza o evento se o prazo mudar.
+O arquivo `invite.ics` contém um evento com o título "Prazo de avaliação: <título da submissão> (<nome da revista>)", que ocupa o dia inteiro do **prazo de conclusão da avaliação**. A descrição do evento traz o link para a avaliação. Quando o **Acesso do avaliador com um clique** está habilitado, esse link abre a avaliação sem login. O plugin não define alarmes nem atualiza o evento se o prazo mudar.
 
 ## Lembrete semanal
 

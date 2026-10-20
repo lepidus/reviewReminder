@@ -52,10 +52,10 @@
  * description
  *   String description of the event.
  * dtend
- *   A date/time stamp designating the end of the event. You can use either a
+ *   A date designating the end of the event. You can use either a
  *   DateTime object or a PHP datetime format string (e.g. "now + 1 hour").
  * dtstart
- *   A date/time stamp designating the start of the event. You can use either a
+ *   A date designating the start of the event. You can use either a
  *   DateTime object or a PHP datetime format string (e.g. "now + 1 hour").
  * location
  *   String address or description of the location of the event.
@@ -73,6 +73,7 @@ use DateTime;
 class ICS
 {
     public const DT_FORMAT = 'Ymd\THis';
+    public const DATE_FORMAT = 'Ymd';
 
     protected $properties = array();
     private $available_properties = array(
@@ -127,7 +128,7 @@ class ICS
         // Build ICS properties - add header
         $props = array();
         foreach ($this->properties as $k => $v) {
-            $props[strtoupper($k . ($k === 'url' ? ';VALUE=URI' : ''))] = $v;
+            $props[strtoupper($k . $this->value_type($k))] = $v;
         }
 
         // Set some default values
@@ -149,16 +150,37 @@ class ICS
     private function sanitize_val($val, $key = false)
     {
         switch ($key) {
-            case 'dtend':
             case 'dtstamp':
-            case 'dtstart':
                 $val = $this->format_timestamp($val);
+                break;
+            case 'dtend':
+            case 'dtstart':
+                $val = $this->format_date($val);
                 break;
             default:
                 $val = $this->escape_string($val);
         }
 
         return $val;
+    }
+
+    private function value_type($key)
+    {
+        switch ($key) {
+            case 'url':
+                return ';VALUE=URI';
+            case 'dtend':
+            case 'dtstart':
+                return ';VALUE=DATE';
+            default:
+                return '';
+        }
+    }
+
+    private function format_date($date)
+    {
+        $dt = new DateTime($date);
+        return $dt->format(self::DATE_FORMAT);
     }
 
     private function format_timestamp($timestamp)

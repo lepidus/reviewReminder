@@ -31,7 +31,7 @@ Example of the email sent when the reviewer accepts the request:
 >
 > You can also use the attached reminder to add this event to your preferred calendar.
 
-The `invite.ics` file contains an event from the moment of acceptance until 23:59:59 on the **review completion deadline**, in the time zone of the reviewer's calendar app. The event description links to the review. When **One-click Reviewer Access** is enabled, that link opens the review without signing in. The plugin sets no alarms and does not update the event if the deadline changes.
+The `invite.ics` file contains an event titled "Review deadline: <submission title> (<journal name>)", which takes the whole day of the **review completion deadline**. The event description links to the review. When **One-click Reviewer Access** is enabled, that link opens the review without signing in. The plugin sets no alarms and does not update the event if the deadline changes.
 
 ## Weekly reminder
 

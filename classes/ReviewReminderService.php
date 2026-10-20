@@ -4,7 +4,6 @@ namespace APP\plugins\generic\reviewReminder\classes;
 
 use APP\facades\Repo;
 use APP\core\Application;
-use PKP\config\Config;
 use Illuminate\Support\Facades\Mail;
 use APP\plugins\generic\reviewReminder\classes\mail\mailables\ReviewReminder;
 use APP\plugins\generic\reviewReminder\lib\ICS;
@@ -56,24 +55,25 @@ class ReviewReminderService
 
     private function createICalendarContents()
     {
-        $timeZone = new \DateTimeZone(Config::getVar('general', 'time_zone'));
-        $reviewDueDateTime = new \DateTime($this->reviewDueDate, $timeZone);
-        $reviewDueDateTime->setTime(23, 59, 59);
-        $formattedReviewDueDate = $reviewDueDateTime->format('Ymd\THis\Z');
+        $submissionTitle = $this->escapeICalendarTitle($this->submission->getLocalizedTitle());
+        $reviewDueDate = new \DateTimeImmutable($this->reviewDueDate);
 
         $ics = new ICS(array(
             'description' => __(
                 'plugins.generic.reviewReminder.ics.description',
                 [
-                    'submissionTitle' => $this->escapeICalendarTitle($this->submission->getLocalizedTitle()),
+                    'submissionTitle' => $submissionTitle,
                     'submissionReviewUrl' => $this->oneClickReviewerUrl ?? $this->getReviewUrl()
                 ]
             ),
-            'dtstart' => 'now',
-            'dtend' => $formattedReviewDueDate,
+            'dtstart' => $reviewDueDate->format('Y-m-d'),
+            'dtend' => $reviewDueDate->modify('+1 day')->format('Y-m-d'),
             'summary' => __(
                 'plugins.generic.reviewReminder.ics.summary',
-                ['journalName' => $this->context->getLocalizedName()]
+                [
+                    'submissionTitle' => $submissionTitle,
+                    'journalName' => $this->context->getLocalizedName()
+                ]
             ),
             'organizer' => $this->context->getLocalizedName() . ':mailto:' . $this->context->getData('contactEmail'),
         ));
