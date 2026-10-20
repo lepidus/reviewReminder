@@ -7,12 +7,14 @@ msgstr "Envia e-mail com lembrete de avaliação para avaliadores designados."
 msgid "plugins.generic.reviewReminder.ics.description"
 msgstr "Prazo para avaliação de {$submissionTitle}: {$submissionReviewUrl}"
 
-msgid "plugins.generic.reviewReminder.ics.description.urlNotAvailable"
-msgstr "URL não está disponível"
-
 msgid "plugins.generic.reviewReminder.ics.summary"
 msgstr "{$journalName} - Agende sua avaliação"
 
 msgid "plugins.generic.reviewReminder.reviewDueDate"
 msgstr "Data limite: {$reviewDueDate}"
 
+msgid "plugins.generic.reviewReminder.event.pendingReviewsReminderSent"
+msgstr "O plugin Review Reminder enviou o lembrete semanal de avaliações pendentes para {$recipientName}"
+
+msgid "plugins.generic.reviewReminder.history.pendingReviewsReminder"
+msgstr "Lembrete semanal de avaliações pendentes"

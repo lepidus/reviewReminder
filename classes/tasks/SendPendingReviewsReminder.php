@@ -5,6 +5,7 @@ namespace APP\plugins\generic\reviewReminder\classes\tasks;
 use APP\core\Application;
 use APP\facades\Repo;
 use APP\plugins\generic\reviewReminder\classes\PendingReviewsEmailBuilder;
+use APP\plugins\generic\reviewReminder\classes\ReminderActivityLog;
 use APP\plugins\generic\reviewReminder\classes\ReviewReminderDAO;
 use APP\plugins\generic\reviewReminder\ReviewReminderPlugin;
 use Illuminate\Support\Facades\Mail;
@@ -24,6 +25,7 @@ class SendPendingReviewsReminder extends ScheduledTask
         $contextDao = Application::getContextDAO();
         $contexts = $contextDao->getAll(true);
         $reviewReminderDao = new ReviewReminderDAO();
+        $reminderActivityLog = new ReminderActivityLog();
 
         while ($context = $contexts->next()) {
             if (!$this->plugin->getEnabled($context->getId())) {
@@ -32,6 +34,7 @@ class SendPendingReviewsReminder extends ScheduledTask
 
             $submissions = [];
             $pendingReviewsByReviewer = [];
+            $pendingReviewAssignmentsByReviewer = [];
             $incompleteReviews = $reviewReminderDao->getIncompleteReviewsByContext($context->getId());
 
             foreach ($incompleteReviews as $reviewAssignment) {
@@ -49,6 +52,7 @@ class SendPendingReviewsReminder extends ScheduledTask
                     'submission' => $submission,
                     'reviewDueDate' => $reviewAssignment->getDateDue(),
                 ];
+                $pendingReviewAssignmentsByReviewer[$reviewAssignment->getReviewerId()][] = $reviewAssignment;
             }
 
             $activeReviewerIds = $this->getActiveReviewersIds($context->getId());
@@ -72,6 +76,10 @@ class SendPendingReviewsReminder extends ScheduledTask
 
                 $email = $pendingReviewsEmailBuilder->buildEmail();
                 Mail::send($email);
+
+                foreach ($pendingReviewAssignmentsByReviewer[$reviewerId] as $reviewAssignment) {
+                    $reminderActivityLog->recordReminder($reviewAssignment, $reviewer);
+                }
             }
         }
 

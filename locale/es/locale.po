@@ -7,11 +7,14 @@ msgstr "Envía un correo electrónico de recordatorio de revisión a los revisor
 msgid "plugins.generic.reviewReminder.ics.description"
 msgstr "Plazo para la revisión de {$submissionTitle}: {$submissionReviewUrl}"
 
-msgid "plugins.generic.reviewReminder.ics.description.urlNotAvailable"
-msgstr "URL no disponible"
-
 msgid "plugins.generic.reviewReminder.ics.summary"
 msgstr "{$journalName} - Programar su Revisión"
 
 msgid "plugins.generic.reviewReminder.reviewDueDate"
 msgstr "Fecha límite: {$reviewDueDate}"
+
+msgid "plugins.generic.reviewReminder.event.pendingReviewsReminderSent"
+msgstr "El plugin Review Reminder envió el recordatorio semanal de revisiones pendientes a {$recipientName}"
+
+msgid "plugins.generic.reviewReminder.history.pendingReviewsReminder"
+msgstr "Recordatorio semanal de revisiones pendientes"
