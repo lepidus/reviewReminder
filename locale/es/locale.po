@@ -18,3 +18,6 @@ msgstr "Fecha límite: {$reviewDueDate}"
 
 msgid "plugins.generic.reviewReminder.event.pendingReviewsReminderSent"
 msgstr "El plugin Review Reminder envió el recordatorio semanal de revisiones pendientes a {$recipientName}"
+
+msgid "plugins.generic.reviewReminder.history.pendingReviewsReminder"
+msgstr "Recordatorio semanal de revisiones pendientes"

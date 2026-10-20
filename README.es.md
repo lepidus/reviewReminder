@@ -50,7 +50,7 @@ Se incluyen las revisiones para las que ya se ha notificado al revisor, en la ro
 
 La lista incluye tanto las revisiones atrasadas como aquellas cuyos plazos aún no han vencido. El envío es semanal; no se activa un número fijo de días antes del plazo de la invitación o de la revisión. El correo semanal utiliza la plantilla `PENDING_REVIEWS_REMINDER` y no incluye un archivo adjunto de calendario.
 
-Después de enviar un correo semanal, el recordatorio se registra en el *Registro de actividad* de cada envío listado con un mensaje que identifica al plugin Review Reminder como remitente, y se muestra en el *Historial* del revisor para esa revisión, con su fecha y hora. La fecha de recordatorio de la propia revisión no se modifica, por lo que los recordatorios automáticos de OJS siguen funcionando según su configuración.
+Después de enviar un correo semanal, el recordatorio se registra en el *Registro de actividad* de cada envío listado con un mensaje que identifica al plugin Review Reminder como remitente. En el *Historial* del revisor para esa revisión, los recordatorios enviados por el plugin se muestran con su fecha y hora en un bloque separado, debajo del historial que mantiene OJS, para que no se confundan con los recordatorios de OJS. La fecha de recordatorio de la propia revisión no se modifica, por lo que los recordatorios automáticos de OJS siguen funcionando según su configuración.
 
 ### Tareas programadas y cron
 

@@ -24,11 +24,13 @@ class ReviewHistoryTest extends PKPTestCase
     private const CONTEXT_ID = 1;
     private const CONTEXT_PATH = 'publicknowledge';
     private const SUBMISSION_ID = 7;
-    private const REVIEW_ASSIGNMENT_ID = 11;
-    private const OTHER_REVIEW_ASSIGNMENT_ID = 12;
+    private const EXISTING_REVIEW_ASSIGNMENT_ID = 11;
     private const FIRST_REMINDER_DATE = '2026-10-05 08:30:00';
     private const SECOND_REMINDER_DATE = '2026-10-12 14:45:00';
     private const CORE_REVIEW_HISTORY_TEMPLATE = 'workflow/reviewHistory.tpl';
+    private const PENDING_REVIEWS_REMINDER_MESSAGE = 'plugins.generic.reviewReminder.event.pendingReviewsReminderSent';
+    private const CORE_AUTOMATIC_REMINDER_MESSAGE = 'submission.event.reviewer.reviewerRemindedAuto';
+    private const PENDING_REVIEWS_REMINDER_LABEL = 'Weekly pending reviews reminder';
 
     private $pluginSettingsDao;
     private $lastEventLogIdBeforeTest;
@@ -36,6 +38,8 @@ class ReviewHistoryTest extends PKPTestCase
     private $router;
     private $fetchHooksBeforeTest;
     private $enabledSettingBeforeTest;
+    private $reviewAssignmentId;
+    private $otherReviewAssignmentId;
 
     protected function getMockedRegistryKeys(): array
     {
@@ -56,7 +60,9 @@ class ReviewHistoryTest extends PKPTestCase
 
         $this->fetchHooksBeforeTest = Hook::getHooks('TemplateManager::fetch');
         $request = $this->createReviewHistoryRequest();
-        $this->authorizeReviewAssignment(self::REVIEW_ASSIGNMENT_ID);
+        $this->reviewAssignmentId = $this->createReviewAssignment();
+        $this->otherReviewAssignmentId = $this->createReviewAssignment();
+        $this->authorizeReviewAssignment($this->reviewAssignmentId);
         $plugin = new ReviewReminderPlugin();
         $plugin->register('generic', self::PLUGIN_PATH, self::CONTEXT_ID);
         $this->templateManager = TemplateManager::getManager($request);
@@ -67,12 +73,21 @@ class ReviewHistoryTest extends PKPTestCase
         $createdEventLogIds = DB::table('event_log')->where('log_id', '>', $this->lastEventLogIdBeforeTest)->pluck('log_id');
         DB::table('event_log_settings')->whereIn('log_id', $createdEventLogIds)->delete();
         DB::table('event_log')->whereIn('log_id', $createdEventLogIds)->delete();
+        DB::table('review_assignments')->whereIn('review_id', [$this->reviewAssignmentId, $this->otherReviewAssignmentId])->delete();
 
         $this->restoreEnabledSetting();
         $hooks = &Hook::getHooks();
         $hooks['TemplateManager::fetch'] = $this->fetchHooksBeforeTest;
 
         parent::tearDown();
+    }
+
+    private function createReviewAssignment(): int
+    {
+        $reviewAssignment = (array) DB::table('review_assignments')->where('review_id', self::EXISTING_REVIEW_ASSIGNMENT_ID)->first();
+        unset($reviewAssignment['review_id']);
+
+        return DB::table('review_assignments')->insertGetId($reviewAssignment, 'review_id');
     }
 
     private function restoreEnabledSetting(): void
@@ -125,7 +140,7 @@ class ReviewHistoryTest extends PKPTestCase
         });
     }
 
-    private function recordReminder(int $reviewAssignmentId, string $dateLogged): void
+    private function recordReminder(int $reviewAssignmentId, string $dateLogged, string $message = self::PENDING_REVIEWS_REMINDER_MESSAGE): void
     {
         $reviewAssignment = Repo::reviewAssignment()->get($reviewAssignmentId);
         $reviewer = Repo::user()->get($reviewAssignment->getReviewerId());
@@ -134,7 +149,7 @@ class ReviewHistoryTest extends PKPTestCase
             'assocId' => self::SUBMISSION_ID,
             'eventType' => PKPSubmissionEventLogEntry::SUBMISSION_LOG_REVIEW_REMIND_AUTO,
             'userId' => null,
-            'message' => 'plugins.generic.reviewReminder.event.pendingReviewsReminderSent',
+            'message' => $message,
             'isTranslated' => false,
             'dateLogged' => $dateLogged,
             'recipientId' => $reviewer->getId(),
@@ -145,7 +160,7 @@ class ReviewHistoryTest extends PKPTestCase
 
     private function renderReviewHistory(): string
     {
-        $reviewAssignment = Repo::reviewAssignment()->get(self::REVIEW_ASSIGNMENT_ID);
+        $reviewAssignment = Repo::reviewAssignment()->get($this->reviewAssignmentId);
         $this->templateManager->assign('dates', [
             'common.assigned' => $reviewAssignment->getDateAssigned(),
             'common.notified' => $reviewAssignment->getDateNotified(),
@@ -155,55 +170,103 @@ class ReviewHistoryTest extends PKPTestCase
         return $this->templateManager->fetch(self::CORE_REVIEW_HISTORY_TEMPLATE);
     }
 
+    private function renderCoreReviewHistory(): string
+    {
+        $hooks = &Hook::getHooks();
+        $pluginFetchHooks = $hooks['TemplateManager::fetch'];
+        $hooks['TemplateManager::fetch'] = $this->fetchHooksBeforeTest;
+
+        try {
+            return $this->renderReviewHistory();
+        } finally {
+            $hooks['TemplateManager::fetch'] = $pluginFetchHooks;
+        }
+    }
+
+    private function renderPluginReminders(): string
+    {
+        $coreReviewHistory = $this->renderCoreReviewHistory();
+        $reviewHistory = $this->renderReviewHistory();
+        $this->assertStringStartsWith($coreReviewHistory, $reviewHistory);
+
+        return substr($reviewHistory, strlen($coreReviewHistory));
+    }
+
     private function formatHistoryDate(string $date): string
     {
         $format = $this->templateManager->getTemplateVars('datetimeFormatShort');
         return (new Carbon($date))->locale(Locale::getLocale())->translatedFormat($format);
     }
 
-    public function testShouldListEveryReminderSentForTheReviewAssignment(): void
+    public function testShouldKeepCoreHistoryUnchangedWhenNoReminderWasSent(): void
     {
-        $this->recordReminder(self::REVIEW_ASSIGNMENT_ID, self::FIRST_REMINDER_DATE);
-        $this->recordReminder(self::REVIEW_ASSIGNMENT_ID, self::SECOND_REMINDER_DATE);
-
-        $reviewHistory = $this->renderReviewHistory();
-
-        $this->assertStringContainsString($this->formatHistoryDate(self::FIRST_REMINDER_DATE), $reviewHistory);
-        $this->assertStringContainsString($this->formatHistoryDate(self::SECOND_REMINDER_DATE), $reviewHistory);
+        $this->assertSame($this->renderCoreReviewHistory(), $this->renderReviewHistory());
     }
 
-    public function testShouldKeepReviewAssignmentDatesInChronologicalOrder(): void
+    public function testShouldRenderCoreHistoryBeforeTheRemindersSentByThePlugin(): void
     {
-        $reviewAssignment = Repo::reviewAssignment()->get(self::REVIEW_ASSIGNMENT_ID);
-        $this->recordReminder(self::REVIEW_ASSIGNMENT_ID, self::SECOND_REMINDER_DATE);
-        $this->recordReminder(self::REVIEW_ASSIGNMENT_ID, self::FIRST_REMINDER_DATE);
+        $this->recordReminder($this->reviewAssignmentId, self::FIRST_REMINDER_DATE);
 
         $reviewHistory = $this->renderReviewHistory();
 
-        $assignedPosition = strpos($reviewHistory, $this->formatHistoryDate($reviewAssignment->getDateAssigned()));
-        $firstReminderPosition = strpos($reviewHistory, $this->formatHistoryDate(self::FIRST_REMINDER_DATE));
-        $secondReminderPosition = strpos($reviewHistory, $this->formatHistoryDate(self::SECOND_REMINDER_DATE));
-        $this->assertNotFalse($assignedPosition);
-        $this->assertLessThan($firstReminderPosition, $assignedPosition);
-        $this->assertLessThan($secondReminderPosition, $firstReminderPosition);
+        $this->assertStringStartsWith($this->renderCoreReviewHistory(), $reviewHistory);
+        $this->assertNotSame($this->renderCoreReviewHistory(), $reviewHistory);
+    }
+
+    public function testShouldIdentifyThePluginAsSenderOfTheListedReminders(): void
+    {
+        $this->recordReminder($this->reviewAssignmentId, self::FIRST_REMINDER_DATE);
+
+        $pluginReminders = $this->renderPluginReminders();
+
+        $this->assertStringContainsString('Review Reminder', $pluginReminders);
+        $this->assertStringContainsString(self::PENDING_REVIEWS_REMINDER_LABEL, $pluginReminders);
+    }
+
+    public function testShouldListEveryReminderSentByThePlugin(): void
+    {
+        $this->recordReminder($this->reviewAssignmentId, self::FIRST_REMINDER_DATE);
+        $this->recordReminder($this->reviewAssignmentId, self::SECOND_REMINDER_DATE);
+
+        $pluginReminders = $this->renderPluginReminders();
+
+        $this->assertStringContainsString($this->formatHistoryDate(self::FIRST_REMINDER_DATE), $pluginReminders);
+        $this->assertStringContainsString($this->formatHistoryDate(self::SECOND_REMINDER_DATE), $pluginReminders);
+        $this->assertSame(2, substr_count($pluginReminders, self::PENDING_REVIEWS_REMINDER_LABEL));
+    }
+
+    public function testShouldListRemindersSentByThePluginInChronologicalOrder(): void
+    {
+        $this->recordReminder($this->reviewAssignmentId, self::SECOND_REMINDER_DATE);
+        $this->recordReminder($this->reviewAssignmentId, self::FIRST_REMINDER_DATE);
+
+        $pluginReminders = $this->renderPluginReminders();
+
+        $this->assertLessThan(
+            strpos($pluginReminders, $this->formatHistoryDate(self::SECOND_REMINDER_DATE)),
+            strpos($pluginReminders, $this->formatHistoryDate(self::FIRST_REMINDER_DATE))
+        );
     }
 
     public function testShouldNotListRemindersOfOtherReviewAssignments(): void
     {
-        $this->recordReminder(self::OTHER_REVIEW_ASSIGNMENT_ID, self::FIRST_REMINDER_DATE);
+        $this->recordReminder($this->otherReviewAssignmentId, self::FIRST_REMINDER_DATE);
 
-        $reviewHistory = $this->renderReviewHistory();
+        $this->assertSame($this->renderCoreReviewHistory(), $this->renderReviewHistory());
+    }
 
-        $this->assertStringNotContainsString($this->formatHistoryDate(self::FIRST_REMINDER_DATE), $reviewHistory);
+    public function testShouldNotListCoreRemindersAsSentByThePlugin(): void
+    {
+        $this->recordReminder($this->reviewAssignmentId, self::FIRST_REMINDER_DATE, self::CORE_AUTOMATIC_REMINDER_MESSAGE);
+
+        $this->assertSame($this->renderCoreReviewHistory(), $this->renderReviewHistory());
     }
 
     public function testShouldKeepCoreHistoryWhenNoReviewAssignmentIsAuthorized(): void
     {
-        $this->recordReminder(self::REVIEW_ASSIGNMENT_ID, self::FIRST_REMINDER_DATE);
+        $this->recordReminder($this->reviewAssignmentId, self::FIRST_REMINDER_DATE);
         $this->authorizeReviewAssignment(null);
 
-        $reviewHistory = $this->renderReviewHistory();
-
-        $this->assertStringNotContainsString($this->formatHistoryDate(self::FIRST_REMINDER_DATE), $reviewHistory);
+        $this->assertSame($this->renderCoreReviewHistory(), $this->renderReviewHistory());
     }
 }
