@@ -37,7 +37,7 @@ O arquivo `invite.ics` contém um evento com o título "Prazo de avaliação: <t
 
 Exemplo do email semanal:
 
-> **Assunto:** Lembrete de Avaliações Pendentes
+> **Assunto:** Lembrete de Avaliações Pendentes - Revista Exemplo
 >
 > Prezado(a) Maria Silva,
 >

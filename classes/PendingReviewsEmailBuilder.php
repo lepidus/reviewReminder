@@ -39,6 +39,7 @@ class PendingReviewsEmailBuilder
         $email->to([['name' => $this->reviewer->getFullName(), 'email' => $this->reviewer->getEmail()]]);
         $email->subject($emailTemplate->getLocalizedData('subject', $this->locale));
         $email->body($emailTemplate->getLocalizedData('body', $this->locale));
+        $email->setData($this->locale);
 
         return $email;
     }

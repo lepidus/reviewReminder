@@ -37,7 +37,7 @@ El archivo `invite.ics` contiene un evento titulado "Plazo de revisión: <títul
 
 Ejemplo del correo semanal:
 
-> **Asunto:** Recordatorio de Revisiones Pendientes
+> **Asunto:** Recordatorio de Revisiones Pendientes - Revista de Ejemplo
 >
 > Estimado/a Maria Silva,
 >

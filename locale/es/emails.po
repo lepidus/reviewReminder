@@ -26,7 +26,7 @@ msgid "emails.pendingReviewsReminder.description"
 msgstr "Modelo de correo electrónico utilizado para notificar a los revisores con una lista de revisiones pendientes"
 
 msgid "emails.pendingReviewsReminder.subject"
-msgstr "Recordatorio de Revisiones Pendientes"
+msgstr "Recordatorio de Revisiones Pendientes - {$journalName}"
 
 msgid "emails.pendingReviewsReminder.body"
 msgstr ""

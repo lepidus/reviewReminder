@@ -37,7 +37,7 @@ The `invite.ics` file contains an event titled "Review deadline: <submission tit
 
 Example of the weekly email:
 
-> **Subject:** Pending Reviews Reminder
+> **Subject:** Pending Reviews Reminder - Example Journal
 >
 > Dear Maria Silva,
 >
