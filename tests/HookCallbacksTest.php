@@ -32,6 +32,7 @@ class HookCallbacksTest extends PKPTestCase
     private const OVERDUE_CALENDAR_END = 'DTEND;VALUE=DATE:20200111';
     private const INJECTED_CALENDAR_PROPERTY = 'X-INJECTED-PROPERTY:injected';
     private const ONE_CLICK_REVIEW_URL = 'http://localhost/index.php/publicknowledge/invitation/accept?id=1&key=oneClickKey';
+    private const REVIEW_PAGE_PATH = '/reviewer/submission?submissionId=7';
     private const CALENDAR_EVENT_NAME = 'SUMMARY:Review deadline: Developing efficacy beliefs in the classroom (Journal of Public Knowledge)';
 
     private $newReviewRoundId;
@@ -238,11 +239,13 @@ class HookCallbacksTest extends PKPTestCase
         $this->assertEmpty($injectedLines);
     }
 
-    public function testShouldLinkCalendarInviteToOneClickReviewerAccessWhenEnabled(): void
+    public function testShouldLinkCalendarInviteToReviewPageInsteadOfOneClickReviewerAccess(): void
     {
         $mailable = $this->sendReviewRequest(Repo::reviewAssignment()->get(self::REVIEW_ASSIGNMENT_ID), self::ONE_CLICK_REVIEW_URL);
 
-        $this->assertStringContainsString(self::ONE_CLICK_REVIEW_URL, $this->getCalendarInvite($mailable));
+        $calendarInvite = $this->getCalendarInvite($mailable);
+        $this->assertStringNotContainsString(self::ONE_CLICK_REVIEW_URL, $calendarInvite);
+        $this->assertStringContainsString(self::REVIEW_PAGE_PATH, $calendarInvite);
     }
 
     public function testShouldNameCalendarEventAfterTheReviewedSubmissionAndJournal(): void

@@ -50,7 +50,7 @@ Sem o cron, o OJS usa o executor integrado (`task_runner` em `config.inc.php`), 
 
 ## Anexo de calendário
 
-O arquivo `invite.ics` contém um evento com o título "Prazo de avaliação: <título da submissão> (<nome da revista>)" e, na descrição, o link para a página de avaliação. O evento ocupa o dia inteiro do **prazo de conclusão da avaliação**.
+O arquivo `invite.ics` contém um evento com o título "Prazo de avaliação: <título da submissão> (<nome da revista>)" e, na descrição, o link para a página de avaliação. O evento ocupa o dia inteiro do **prazo de conclusão da avaliação**. O link pede login ao avaliador mesmo com o **Acesso do avaliador com um clique** habilitado, porque eventos de calendário costumam ser sincronizados e compartilhados.
 
 Importar o evento é opcional e não aceita o convite. O plugin não define alarmes nem atualiza o evento se o prazo mudar. O anexo não é adicionado aos lembretes automáticos de atraso do OJS.
 
@@ -63,10 +63,6 @@ Importar o evento é opcional e não aceita o convite. O plugin não define alar
 2. Em **Website > Plugins > Plugins instalados**, use **Enviar um novo plugin** e envie o pacote.
 3. Ative o **Review Reminder** em cada revista que precisar dele.
 4. Confirme que o OJS envia emails e que o agendador está configurado.
-
-Opcionalmente, habilite o **Acesso do avaliador com um clique** em **Fluxo de trabalho > Avaliação > Configuração**. Assim, o anexo usa o mesmo link de um clique do email do OJS e abre a avaliação sem login. Os links do lembrete semanal sempre pedem login ao avaliador.
-
-![Como habilitar o acesso do avaliador com um clique](https://i.imgur.com/cHjoXsI.gif)
 
 Ao desativar o plugin em uma revista, os próximos emails deixam de levar o anexo e a revista sai dos próximos lembretes semanais. Avaliações, prazos e eventos já importados não são alterados.
 

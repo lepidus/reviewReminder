@@ -14,14 +14,12 @@ class ReviewReminderService
     private Journal $context;
     private Submission $submission;
     private ReviewAssignment $reviewAssignment;
-    private ?string $reviewUrl;
 
-    public function __construct(Journal $context, ReviewAssignment $reviewAssignment, ?string $reviewUrl)
+    public function __construct(Journal $context, ReviewAssignment $reviewAssignment)
     {
         $this->context = $context;
         $this->submission = Repo::submission()->get((int) $reviewAssignment->getSubmissionId());
         $this->reviewAssignment = $reviewAssignment;
-        $this->reviewUrl = $reviewUrl;
     }
 
     public function getCalendarContents(): string
@@ -39,7 +37,7 @@ class ReviewReminderService
                 'plugins.generic.reviewReminder.ics.description',
                 [
                     'submissionTitle' => $submissionTitle,
-                    'submissionReviewUrl' => $this->reviewUrl ?? $this->getReviewUrl()
+                    'submissionReviewUrl' => $this->getReviewUrl()
                 ]
             ),
             'dtstart' => $reviewDueDate->format('Y-m-d'),

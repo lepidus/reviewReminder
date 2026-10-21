@@ -50,7 +50,7 @@ Without cron, OJS uses its built-in runner (`task_runner` in `config.inc.php`), 
 
 ## Calendar attachment
 
-The `invite.ics` file contains an event titled "Review deadline: <submission title> (<journal name>)", with a link to the review page in its description. It is an all-day event on the **review completion deadline**.
+The `invite.ics` file contains an event titled "Review deadline: <submission title> (<journal name>)", with a link to the review page in its description. It is an all-day event on the **review completion deadline**. The link asks the reviewer to sign in even when **One-click Reviewer Access** is enabled, because calendar events are often synced and shared.
 
 Importing the event is optional and does not accept the invitation. The plugin sets no alarms and does not update the event if the deadline changes. The attachment is not added to OJS automatic overdue reminders.
 
@@ -63,10 +63,6 @@ Importing the event is optional and does not accept the invitation. The plugin s
 2. In **Website > Plugins > Installed Plugins**, use **Upload a New Plugin** to upload the package.
 3. Enable **Review Reminder** in each journal that needs it.
 4. Make sure OJS can send emails and that the scheduler is configured.
-
-Optionally, enable **One-click Reviewer Access** in **Workflow > Review > Setup**. The attachment then uses the same one-click link as the OJS email, so it opens the review without signing in. Links in the weekly reminder always ask the reviewer to sign in.
-
-![How to enable One-click Reviewer Access](https://i.imgur.com/cHjoXsI.gif)
 
 Disabling the plugin in a journal stops adding the attachment to future emails and removes the journal from future weekly reminders. Reviews, deadlines, and already imported events are not changed.
 

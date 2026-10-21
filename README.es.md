@@ -50,7 +50,7 @@ Sin cron, OJS usa el ejecutor integrado (`task_runner` en `config.inc.php`), que
 
 ## Archivo adjunto de calendario
 
-El archivo `invite.ics` contiene un evento titulado "Plazo de revisión: <título del envío> (<nombre de la revista>)" y, en la descripción, el enlace a la página de revisión. El evento ocupa todo el día del **plazo para completar la revisión**.
+El archivo `invite.ics` contiene un evento titulado "Plazo de revisión: <título del envío> (<nombre de la revista>)" y, en la descripción, el enlace a la página de revisión. El evento ocupa todo el día del **plazo para completar la revisión**. El enlace pide al revisor iniciar sesión incluso con el **Acceso del revisor con un clic** habilitado, porque los eventos de calendario suelen sincronizarse y compartirse.
 
 Importar el evento es opcional y no acepta la invitación. El plugin no define alarmas ni actualiza el evento si el plazo cambia. El adjunto no se añade a los recordatorios automáticos de retraso de OJS.
 
@@ -63,10 +63,6 @@ Importar el evento es opcional y no acepta la invitación. El plugin no define a
 2. En **Sitio web > Plugins > Plugins instalados**, use **Subir un nuevo plugin** para cargar el paquete.
 3. Active **Review Reminder** en cada revista que lo necesite.
 4. Compruebe que OJS envía correos y que el programador está configurado.
-
-Opcionalmente, habilite el **Acceso del revisor con un clic** en **Flujo de trabajo > Revisión > Configuración**. Así, el adjunto usa el mismo enlace de un clic del correo de OJS y abre la revisión sin iniciar sesión. Los enlaces del recordatorio semanal siempre piden al revisor iniciar sesión.
-
-![Cómo habilitar el acceso del revisor con un clic](https://i.imgur.com/cHjoXsI.gif)
 
 Al desactivar el plugin en una revista, los próximos correos dejan de llevar el adjunto y la revista sale de los próximos recordatorios semanales. Las revisiones, los plazos y los eventos ya importados no se modifican.
 
