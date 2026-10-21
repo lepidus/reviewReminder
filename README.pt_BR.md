@@ -2,11 +2,11 @@
 
 Outros idiomas: [English](README.md) · [Español](README.es.md)
 
-[![Compatibilidade com OJS](https://img.shields.io/badge/OJS-3.5.0.x-brightgreen)](https://github.com/pkp/ojs/tree/stable-3_5_0)
+[![Compatibilidade com OJS](https://img.shields.io/badge/OJS-3.5.0--4%2B-brightgreen)](https://github.com/pkp/ojs/tree/stable-3_5_0)
 [![Versão no GitHub](https://img.shields.io/github/v/release/lepidus/reviewReminder)](https://github.com/lepidus/reviewReminder/releases)
 [![Licença](https://img.shields.io/github/license/lepidus/reviewReminder)](https://github.com/lepidus/reviewReminder/blob/main/LICENSE)
 
-Este README descreve a versão para **OJS 3.5.0.x**. O plugin adiciona dois recursos para os avaliadores:
+Este README descreve a versão para **OJS 3.5.0-4 ou posterior**. O plugin adiciona dois recursos para os avaliadores:
 
 | Recurso | Quando | O que o avaliador recebe |
 | --- | --- | --- |
@@ -56,13 +56,9 @@ Importar o evento é opcional e não aceita o convite. O plugin não define alar
 
 ## Instalação
 
-> [!IMPORTANT]
-> A versão para OJS 3.5 ainda não está na Galeria de Plugins.
+Instale o **Review Reminder** pela Galeria de Plugins em **Website > Plugins**, ou baixe o pacote `.tar.gz` para OJS 3.5 na [página de versões](https://github.com/lepidus/reviewReminder/releases) e envie-o com **Enviar um novo plugin**. Depois, ative-o em cada revista que precisar dele e confirme que o OJS envia emails e que o agendador está configurado.
 
-1. Baixe o pacote `.tar.gz` para OJS 3.5 na [página de versões](https://github.com/lepidus/reviewReminder/releases).
-2. Em **Website > Plugins > Plugins instalados**, use **Enviar um novo plugin** e envie o pacote.
-3. Ative o **Review Reminder** em cada revista que precisar dele.
-4. Confirme que o OJS envia emails e que o agendador está configurado.
+O plugin exige o OJS 3.5.0-4 ou posterior. As versões 3.5.0 anteriores não têm o hook que o plugin usa para anexar o convite de calendário, e os emails saem sem ele.
 
 Ao desativar o plugin em uma revista, os próximos emails deixam de levar o anexo e a revista sai dos próximos lembretes semanais. Avaliações, prazos e eventos já importados não são alterados.
 

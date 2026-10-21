@@ -2,11 +2,11 @@
 
 Otros idiomas: [English](README.md) · [Português do Brasil](README.pt_BR.md)
 
-[![Compatibilidad con OJS](https://img.shields.io/badge/OJS-3.5.0.x-brightgreen)](https://github.com/pkp/ojs/tree/stable-3_5_0)
+[![Compatibilidad con OJS](https://img.shields.io/badge/OJS-3.5.0--4%2B-brightgreen)](https://github.com/pkp/ojs/tree/stable-3_5_0)
 [![Versión en GitHub](https://img.shields.io/github/v/release/lepidus/reviewReminder)](https://github.com/lepidus/reviewReminder/releases)
 [![Licencia](https://img.shields.io/github/license/lepidus/reviewReminder)](https://github.com/lepidus/reviewReminder/blob/main/LICENSE)
 
-Este README describe la versión para **OJS 3.5.0.x**. El plugin añade dos funciones para los revisores:
+Este README describe la versión para **OJS 3.5.0-4 o posterior**. El plugin añade dos funciones para los revisores:
 
 | Función | Cuándo | Qué recibe el revisor |
 | --- | --- | --- |
@@ -56,13 +56,9 @@ Importar el evento es opcional y no acepta la invitación. El plugin no define a
 
 ## Instalación
 
-> [!IMPORTANT]
-> La versión para OJS 3.5 aún no está en la Galería de plugins.
+Instale **Review Reminder** desde la Galería de plugins en **Sitio web > Plugins**, o descargue el paquete `.tar.gz` para OJS 3.5 en la [página de versiones](https://github.com/lepidus/reviewReminder/releases) y cárguelo con **Subir un nuevo plugin**. Después, actívelo en cada revista que lo necesite y compruebe que OJS envía correos y que el programador está configurado.
 
-1. Descargue el paquete `.tar.gz` para OJS 3.5 en la [página de versiones](https://github.com/lepidus/reviewReminder/releases).
-2. En **Sitio web > Plugins > Plugins instalados**, use **Subir un nuevo plugin** para cargar el paquete.
-3. Active **Review Reminder** en cada revista que lo necesite.
-4. Compruebe que OJS envía correos y que el programador está configurado.
+El plugin requiere OJS 3.5.0-4 o posterior. Las versiones 3.5.0 anteriores no tienen el hook que el plugin usa para adjuntar la invitación de calendario, y los correos salen sin ella.
 
 Al desactivar el plugin en una revista, los próximos correos dejan de llevar el adjunto y la revista sale de los próximos recordatorios semanales. Las revisiones, los plazos y los eventos ya importados no se modifican.
 

@@ -2,11 +2,11 @@
 
 Other languages: [Português do Brasil](README.pt_BR.md) · [Español](README.es.md)
 
-[![OJS compatibility](https://img.shields.io/badge/OJS-3.5.0.x-brightgreen)](https://github.com/pkp/ojs/tree/stable-3_5_0)
+[![OJS compatibility](https://img.shields.io/badge/OJS-3.5.0--4%2B-brightgreen)](https://github.com/pkp/ojs/tree/stable-3_5_0)
 [![GitHub release](https://img.shields.io/github/v/release/lepidus/reviewReminder)](https://github.com/lepidus/reviewReminder/releases)
 [![License type](https://img.shields.io/github/license/lepidus/reviewReminder)](https://github.com/lepidus/reviewReminder/blob/main/LICENSE)
 
-This README describes the version for **OJS 3.5.0.x**. The plugin adds two features for reviewers:
+This README describes the version for **OJS 3.5.0-4 or later**. The plugin adds two features for reviewers:
 
 | Feature | When | What the reviewer receives |
 | --- | --- | --- |
@@ -56,13 +56,9 @@ Importing the event is optional and does not accept the invitation. The plugin s
 
 ## Installation
 
-> [!IMPORTANT]
-> The OJS 3.5 version is not yet available in the Plugin Gallery.
+Install **Review Reminder** from the Plugin Gallery in **Website > Plugins**, or download the `.tar.gz` package for OJS 3.5 from the [Releases page](https://github.com/lepidus/reviewReminder/releases) and upload it with **Upload a New Plugin**. Then enable it in each journal that needs it and make sure OJS can send emails and that the scheduler is configured.
 
-1. Download the `.tar.gz` package for OJS 3.5 from the [Releases page](https://github.com/lepidus/reviewReminder/releases).
-2. In **Website > Plugins > Installed Plugins**, use **Upload a New Plugin** to upload the package.
-3. Enable **Review Reminder** in each journal that needs it.
-4. Make sure OJS can send emails and that the scheduler is configured.
+The plugin requires OJS 3.5.0-4 or later. Earlier 3.5.0 releases lack the hook the plugin uses to attach the calendar invite, so the emails go out without it.
 
 Disabling the plugin in a journal stops adding the attachment to future emails and removes the journal from future weekly reminders. Reviews, deadlines, and already imported events are not changed.
 
