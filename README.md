@@ -15,7 +15,7 @@ This README describes the version for **OJS 3.4.0.x**. The plugin sends two emai
 
 Both emails are enabled, per journal, by enabling the plugin. The weekly reminder can be turned off in the plugin's **Settings**, in **Website > Plugins > Installed Plugins**, without affecting the reminder on review acceptance. The weekly reminder's day cannot be changed.
 
-Both emails have the journal's primary contact as sender. The reminder on review acceptance is sent in the language the reviewer is using in OJS, and the weekly reminder in the journal's primary language. Their texts come from the plugin and are not listed in the journal's email templates, so they cannot be edited there. Each sending is recorded in the submission's *Activity Log* and shown in the review's *History*, in a block separate from OJS reminders.
+Both emails have the journal's primary contact as sender. The reminder on review acceptance is sent in the language the reviewer is using in OJS, and the weekly reminder in the journal's primary language. The journal can edit and translate the weekly reminder in **Workflow > Emails**, template *Pending Reviews Reminder*. The text of the reminder on review acceptance comes from the plugin and cannot be edited. Each sending is recorded in the submission's *Activity Log* and shown in the review's *History*, in a block separate from OJS reminders.
 
 ## Review reminder
 

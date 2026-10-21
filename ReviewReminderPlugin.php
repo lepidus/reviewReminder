@@ -21,6 +21,7 @@ use PKP\plugins\GenericPlugin;
 use PKP\plugins\Hook;
 use Illuminate\Support\Facades\DB;
 use APP\plugins\generic\reviewReminder\classes\HookCallbacks;
+use APP\plugins\generic\reviewReminder\classes\mail\mailables\PendingReviewsReminder;
 use APP\plugins\generic\reviewReminder\classes\ReviewHistory;
 use APP\plugins\generic\reviewReminder\classes\ReviewReminderSettingsForm;
 
@@ -42,8 +43,17 @@ class ReviewReminderPlugin extends GenericPlugin
             Hook::add('pkpreviewerreviewstep1form::readuservars', [$hookCallbacks, 'rememberReviewBeingAccepted']);
             Hook::add('ReviewerAction::confirmReview', [$hookCallbacks, 'sendReviewReminder']);
             Hook::add('TemplateManager::fetch', [new ReviewHistory($this), 'addReminders']);
+            Hook::add('Mailer::Mailables', [$this, 'addMailables']);
         }
         return $success;
+    }
+
+    public function addMailables($hookName, $args)
+    {
+        $mailables = $args[0];
+        $mailables->push(PendingReviewsReminder::class);
+
+        return Hook::CONTINUE;
     }
 
     public function getDisplayName()

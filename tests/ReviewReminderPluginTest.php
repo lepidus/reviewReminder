@@ -2,6 +2,8 @@
 
 use APP\core\Application;
 use APP\core\PageRouter;
+use APP\facades\Repo;
+use APP\plugins\generic\reviewReminder\classes\mail\mailables\PendingReviewsReminder;
 use APP\plugins\generic\reviewReminder\ReviewReminderPlugin;
 use Illuminate\Support\Facades\DB;
 use PKP\core\Dispatcher;
@@ -23,6 +25,7 @@ class ReviewReminderPluginTest extends PKPTestCase
     private $enabledSettingBeforeTest;
     private $weeklyReminderSettingBeforeTest;
     private $confirmReviewHooksBeforeTest;
+    private $mailerMailablesHooksBeforeTest;
 
     protected function getMockedRegistryKeys(): array
     {
@@ -47,6 +50,8 @@ class ReviewReminderPluginTest extends PKPTestCase
         $hooks = &Hook::getHooks();
         $this->confirmReviewHooksBeforeTest = $hooks['ReviewerAction::confirmReview'] ?? null;
         unset($hooks['ReviewerAction::confirmReview']);
+        $this->mailerMailablesHooksBeforeTest = $hooks['Mailer::Mailables'] ?? null;
+        unset($hooks['Mailer::Mailables']);
     }
 
     protected function tearDown(): void
@@ -55,6 +60,7 @@ class ReviewReminderPluginTest extends PKPTestCase
         $this->restoreWeeklyReminderSetting();
         $hooks = &Hook::getHooks();
         $hooks['ReviewerAction::confirmReview'] = $this->confirmReviewHooksBeforeTest;
+        $hooks['Mailer::Mailables'] = $this->mailerMailablesHooksBeforeTest;
         parent::tearDown();
     }
 
@@ -99,6 +105,12 @@ class ReviewReminderPluginTest extends PKPTestCase
         $plugin->register('generic', self::PLUGIN_PATH, self::CONTEXT_ID);
 
         return $plugin;
+    }
+
+    private function getJournalEmails(): array
+    {
+        $context = Application::getContextDAO()->getById(self::CONTEXT_ID);
+        return Repo::mailable()->getMany($context)->values()->all();
     }
 
     private function getActionIds(ReviewReminderPlugin $plugin): array
@@ -160,5 +172,19 @@ class ReviewReminderPluginTest extends PKPTestCase
 
         $confirmReviewCallbacks = array_merge(...array_values(Hook::getHooks('ReviewerAction::confirmReview') ?? []));
         $this->assertContains('sendReviewReminder', array_map(fn ($callback) => $callback[1] ?? null, $confirmReviewCallbacks));
+    }
+
+    public function testShouldListWeeklyReminderAmongJournalEmails(): void
+    {
+        $this->registerPluginInJournal(true);
+
+        $this->assertContains(PendingReviewsReminder::class, $this->getJournalEmails());
+    }
+
+    public function testShouldNotListWeeklyReminderAmongJournalEmailsWhenPluginIsDisabled(): void
+    {
+        $this->registerPluginInJournal(false);
+
+        $this->assertNotContains(PendingReviewsReminder::class, $this->getJournalEmails());
     }
 }
