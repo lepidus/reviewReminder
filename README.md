@@ -31,7 +31,7 @@ Example of the email, sent in the journal's primary language with the journal's 
 > This is an automated email. If you have already submitted your review for these manuscripts, please disregard this email.
 
 - Each title links to the review page, which asks the reviewer to sign in. The email has no calendar attachment.
-- The email text comes from the plugin and is not listed in the journal's email templates, so it cannot be edited there.
+- The journal can edit and translate the email in **Workflow > Emails**, template *Pending Reviews Reminder*. The `{$submissionsList}` variable holds the list of pending reviews.
 - It lists reviews in the latest round of submissions still active in the editorial workflow, for which the reviewer has been notified and that are not completed, declined, or cancelled. This includes unanswered invitations and overdue reviews.
 - Reviewers without pending reviews and disabled accounts receive no email. Reviewers with pending reviews in several journals receive one email from each journal.
 - Each sending is recorded in the submission's *Activity Log* and shown in the review's *History*, in a block separate from OJS reminders. The review's own reminder date is not changed.

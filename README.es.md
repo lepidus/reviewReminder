@@ -31,7 +31,7 @@ Ejemplo del correo, enviado en el idioma principal de la revista y con el contac
 > Este es un correo electrónico automático. Si ya ha enviado su revisión para estos manuscritos, por favor ignore este correo.
 
 - Cada título enlaza a la página de revisión, que pide al revisor iniciar sesión. El correo no lleva adjunto de calendario.
-- El texto del correo viene del plugin y no aparece en las plantillas de correo de la revista, por lo que no se puede editar allí.
+- La revista puede editar y traducir el correo en **Flujo de trabajo > Correos electrónicos**, plantilla *Recordatorio de Revisiones Pendientes*. La variable `{$submissionsList}` contiene la lista de revisiones pendientes.
 - Incluye las revisiones de la ronda más reciente, en envíos activos en el flujo editorial, para las que ya se notificó al revisor y que no se completaron, rechazaron ni cancelaron. Esto incluye invitaciones aún sin respuesta y revisiones atrasadas.
 - Los revisores sin pendientes y las cuentas desactivadas no reciben el correo. Quien tiene pendientes en varias revistas recibe un correo de cada revista.
 - Cada envío se registra en el *Registro de actividad* del envío y aparece en el *Historial* de la revisión, en un bloque separado de los recordatorios de OJS. La fecha de recordatorio de la revisión no se modifica.

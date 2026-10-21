@@ -31,7 +31,7 @@ Exemplo do email, enviado no idioma principal da revista e tendo o contato princ
 > Este é um email automático. Caso você já tenha enviado a sua avaliação para estes manuscritos, por favor desconsidere este email.
 
 - Cada título leva à página de avaliação, que pede login ao avaliador. O email não tem anexo de calendário.
-- O texto do email vem do plugin e não aparece nos modelos de email da revista, por isso não pode ser editado ali.
+- A revista pode editar e traduzir o email em **Fluxo de Trabalho > E-mails**, no modelo *Lembrete de Avaliações Pendentes*. A variável `{$submissionsList}` contém a lista de avaliações pendentes.
 - Entram as avaliações da rodada mais recente, em submissões ativas no fluxo editorial, para as quais o avaliador já foi notificado e que não foram concluídas, recusadas ou canceladas. Isso inclui convites ainda sem resposta e avaliações atrasadas.
 - Avaliadores sem pendências e contas desativadas não recebem o email. Quem tem pendências em várias revistas recebe um email de cada revista.
 - Cada envio é registrado no *Histórico de atividades* da submissão e aparece no *Histórico* da avaliação, em um bloco separado dos lembretes do OJS. A data de lembrete da avaliação não é alterada.

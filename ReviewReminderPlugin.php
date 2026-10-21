@@ -17,6 +17,7 @@ namespace APP\plugins\generic\reviewReminder;
 
 use APP\core\Application;
 use APP\plugins\generic\reviewReminder\classes\HookCallbacks;
+use APP\plugins\generic\reviewReminder\classes\mail\mailables\PendingReviewsReminder;
 use APP\plugins\generic\reviewReminder\classes\ReviewHistory;
 use APP\plugins\generic\reviewReminder\classes\ReviewReminderSettingsForm;
 use APP\plugins\generic\reviewReminder\classes\tasks\SendPendingReviewsReminder;
@@ -43,8 +44,17 @@ class ReviewReminderPlugin extends GenericPlugin implements HasTaskScheduler
             Hook::add('EditorAction::setDueDates', [$hookCallbacks, 'rememberAssignedReview']);
             Hook::add('Mailable::build', [$hookCallbacks, 'attachCalendarInvite']);
             Hook::add('TemplateManager::fetch', [new ReviewHistory($this), 'addReminders']);
+            Hook::add('Mailer::Mailables', [$this, 'addMailables']);
         }
         return $success;
+    }
+
+    public function addMailables(string $hookName, array $args): bool
+    {
+        $mailables = $args[0];
+        $mailables->push(PendingReviewsReminder::class);
+
+        return Hook::CONTINUE;
     }
 
     public function getDisplayName()

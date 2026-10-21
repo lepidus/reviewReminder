@@ -32,8 +32,8 @@ class PendingReviewsEmailBuilder
         $submissionsString = $this->getSubmissionsString();
 
         $email = new PendingReviewsReminder($this->context, [
-            'reviewerName' => $this->reviewer->getFullName(),
-            'submissionsList' => $submissionsString
+            PendingReviewsReminder::REVIEWER_NAME => $this->reviewer->getFullName(),
+            PendingReviewsReminder::SUBMISSIONS_LIST => $submissionsString
         ]);
         $email->from($this->context->getData('contactEmail'), $this->context->getData('contactName'));
         $email->to([['name' => $this->reviewer->getFullName(), 'email' => $this->reviewer->getEmail()]]);

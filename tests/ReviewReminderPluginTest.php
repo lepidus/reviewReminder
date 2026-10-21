@@ -2,6 +2,8 @@
 
 use APP\core\Application;
 use APP\core\PageRouter;
+use APP\facades\Repo;
+use APP\plugins\generic\reviewReminder\classes\mail\mailables\PendingReviewsReminder;
 use APP\plugins\generic\reviewReminder\classes\tasks\SendPendingReviewsReminder;
 use APP\plugins\generic\reviewReminder\ReviewReminderPlugin;
 use APP\scheduler\Scheduler;
@@ -32,6 +34,7 @@ class ReviewReminderPluginTest extends PKPTestCase
     private $pluginSettingsDao;
     private $pluginSettingsBeforeTest;
     private $mailableBuildHooksBeforeTest;
+    private $mailerMailablesHooksBeforeTest;
 
     protected function getMockedRegistryKeys(): array
     {
@@ -51,6 +54,8 @@ class ReviewReminderPluginTest extends PKPTestCase
         $hooks = &Hook::getHooks();
         $this->mailableBuildHooksBeforeTest = $hooks['Mailable::build'] ?? null;
         unset($hooks['Mailable::build']);
+        $this->mailerMailablesHooksBeforeTest = $hooks['Mailer::Mailables'] ?? null;
+        unset($hooks['Mailer::Mailables']);
         $this->createRoutedRequest();
     }
 
@@ -62,6 +67,7 @@ class ReviewReminderPluginTest extends PKPTestCase
         }
         $hooks = &Hook::getHooks();
         $hooks['Mailable::build'] = $this->mailableBuildHooksBeforeTest;
+        $hooks['Mailer::Mailables'] = $this->mailerMailablesHooksBeforeTest;
         parent::tearDown();
     }
 
@@ -105,6 +111,12 @@ class ReviewReminderPluginTest extends PKPTestCase
             fn ($action) => $action->getId(),
             $plugin->getActions(Application::get()->getRequest(), [])
         );
+    }
+
+    private function getJournalEmails(): array
+    {
+        $context = app()->get('context')->get(self::CONTEXT_ID);
+        return Repo::mailable()->getMany($context)->values()->all();
     }
 
     private function setLastPendingReviewsReminder(?string $dateTime): void
@@ -182,5 +194,19 @@ class ReviewReminderPluginTest extends PKPTestCase
 
         $mailableBuildCallbacks = array_merge(...array_values(Hook::getHooks('Mailable::build') ?? []));
         $this->assertContains('attachCalendarInvite', array_map(fn ($callback) => $callback[1] ?? null, $mailableBuildCallbacks));
+    }
+
+    public function testShouldListWeeklyReminderAmongJournalEmails(): void
+    {
+        $this->registerPlugin(true);
+
+        $this->assertContains(PendingReviewsReminder::class, $this->getJournalEmails());
+    }
+
+    public function testShouldNotListWeeklyReminderAmongJournalEmailsWhenPluginIsDisabled(): void
+    {
+        $this->registerPlugin(false);
+
+        $this->assertNotContains(PendingReviewsReminder::class, $this->getJournalEmails());
     }
 }
