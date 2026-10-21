@@ -52,7 +52,7 @@ Without cron, OJS uses its built-in runner (`task_runner` in `config.inc.php`), 
 
 The `invite.ics` file contains an event titled "Review deadline: <submission title> (<journal name>)", with a link to the review page in its description. It is an all-day event on the **review completion deadline**. The link asks the reviewer to sign in even when **One-click Reviewer Access** is enabled, because calendar events are often synced and shared.
 
-Importing the event is optional and does not accept the invitation. The plugin sets no alarms and does not update the event if the deadline changes. The attachment is not added to OJS automatic overdue reminders.
+Importing the event is optional and does not accept the invitation. The plugin sets no alarms and sends nothing when the deadline changes. All attachments of a review describe the same event, so importing a later one, such as a manual reminder, updates the existing event in calendar apps that support it. The attachment is not added to OJS automatic overdue reminders.
 
 ## Installation
 

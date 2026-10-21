@@ -52,7 +52,7 @@ Sin cron, OJS usa el ejecutor integrado (`task_runner` en `config.inc.php`), que
 
 El archivo `invite.ics` contiene un evento titulado "Plazo de revisión: <título del envío> (<nombre de la revista>)" y, en la descripción, el enlace a la página de revisión. El evento ocupa todo el día del **plazo para completar la revisión**. El enlace pide al revisor iniciar sesión incluso con el **Acceso del revisor con un clic** habilitado, porque los eventos de calendario suelen sincronizarse y compartirse.
 
-Importar el evento es opcional y no acepta la invitación. El plugin no define alarmas ni actualiza el evento si el plazo cambia. El adjunto no se añade a los recordatorios automáticos de retraso de OJS.
+Importar el evento es opcional y no acepta la invitación. El plugin no define alarmas y no envía nada cuando cambia el plazo. Todos los adjuntos de una revisión describen el mismo evento, así que importar uno posterior, como el de un recordatorio manual, actualiza el evento existente en las aplicaciones de calendario que lo permiten. El adjunto no se añade a los recordatorios automáticos de retraso de OJS.
 
 ## Instalación
 

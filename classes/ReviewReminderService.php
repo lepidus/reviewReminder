@@ -7,6 +7,8 @@ use APP\facades\Repo;
 use APP\journal\Journal;
 use APP\plugins\generic\reviewReminder\lib\ICS;
 use APP\submission\Submission;
+use Carbon\Carbon;
+use PKP\config\Config;
 use PKP\submission\reviewAssignment\ReviewAssignment;
 
 class ReviewReminderService
@@ -49,6 +51,8 @@ class ReviewReminderService
                     'journalName' => $this->context->getLocalizedName()
                 ]
             ),
+            'uid' => 'review-assignment-' . $this->reviewAssignment->getId() . '@' . $this->getHost(),
+            'sequence' => Carbon::now()->getTimestamp(),
             'organizer' => [
                 'name' => $this->context->getLocalizedName(),
                 'email' => $this->context->getData('contactEmail'),
@@ -56,6 +60,11 @@ class ReviewReminderService
         ]);
 
         return $ics;
+    }
+
+    private function getHost(): string
+    {
+        return parse_url(Config::getVar('general', 'base_url'), PHP_URL_HOST) ?: 'localhost';
     }
 
     private function getReviewUrl()

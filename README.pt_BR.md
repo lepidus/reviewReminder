@@ -52,7 +52,7 @@ Sem o cron, o OJS usa o executor integrado (`task_runner` em `config.inc.php`), 
 
 O arquivo `invite.ics` contém um evento com o título "Prazo de avaliação: <título da submissão> (<nome da revista>)" e, na descrição, o link para a página de avaliação. O evento ocupa o dia inteiro do **prazo de conclusão da avaliação**. O link pede login ao avaliador mesmo com o **Acesso do avaliador com um clique** habilitado, porque eventos de calendário costumam ser sincronizados e compartilhados.
 
-Importar o evento é opcional e não aceita o convite. O plugin não define alarmes nem atualiza o evento se o prazo mudar. O anexo não é adicionado aos lembretes automáticos de atraso do OJS.
+Importar o evento é opcional e não aceita o convite. O plugin não define alarmes e não envia nada quando o prazo muda. Todos os anexos de uma avaliação descrevem o mesmo evento, então importar um anexo posterior, como o de um lembrete manual, atualiza o evento existente nos aplicativos de calendário que oferecem isso. O anexo não é adicionado aos lembretes automáticos de atraso do OJS.
 
 ## Instalação
 
