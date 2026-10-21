@@ -21,6 +21,16 @@ class ICSTest extends PKPTestCase
         return explode("\r\n", str_replace("\r\n ", '', (new ICS($properties))->to_string()));
     }
 
+    public function testShouldIdentifyEventWithGivenUid(): void
+    {
+        $this->assertContains('UID:review-assignment-11@journal.org', $this->getLines(['uid' => 'review-assignment-11@journal.org']));
+    }
+
+    public function testShouldWriteGivenSequence(): void
+    {
+        $this->assertContains('SEQUENCE:1792800000', $this->getLines(['sequence' => 1792800000]));
+    }
+
     public function testShouldIdentifyPluginAsCalendarProducer(): void
     {
         $this->assertContains('PRODID:-//Lepidus Tecnologia//Review Reminder//EN', $this->getLines([]));

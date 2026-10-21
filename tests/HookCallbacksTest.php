@@ -5,6 +5,7 @@ use APP\core\PageRouter;
 use APP\facades\Repo;
 use APP\plugins\generic\reviewReminder\classes\HookCallbacks;
 use APP\plugins\generic\reviewReminder\classes\mail\mailables\ReviewReminder;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use PKP\core\Dispatcher;
@@ -71,6 +72,7 @@ class HookCallbacksTest extends PKPTestCase
     {
         DB::table('access_keys')->whereIn('assoc_id', $this->confirmedReviewAssignmentIds)->delete();
         $this->setOneClickReviewerAccess($this->oneClickAccessSettingBeforeTest);
+        Carbon::setTestNow();
 
         $createdEventLogIds = DB::table('event_log')->where('log_id', '>', $this->lastEventLogIdBeforeTest)->pluck('log_id');
         DB::table('event_log_settings')->whereIn('log_id', $createdEventLogIds)->delete();
@@ -220,6 +222,14 @@ class HookCallbacksTest extends PKPTestCase
         return str_replace("\r\n ", '', $this->getSentReminder()->rawAttachments[0]['data']);
     }
 
+    private function getCalendarProperty(string $propertyName): string
+    {
+        $propertyLines = array_values(preg_grep('/^' . $propertyName . ':/', explode("\r\n", $this->getCalendarInvite())));
+        $this->assertCount(1, $propertyLines);
+
+        return substr($propertyLines[0], strlen($propertyName) + 1);
+    }
+
     private function getSentReminder(): ReviewReminder
     {
         $sentReminders = Mail::sent(ReviewReminder::class);
@@ -366,5 +376,23 @@ class HookCallbacksTest extends PKPTestCase
         $this->acceptThroughReviewForm($previousRoundAssignment);
 
         $this->assertStringContainsString(self::PREVIOUS_ROUND_CALENDAR_START, $this->getCalendarInvite());
+    }
+
+    public function testShouldIdentifyCalendarEventByTheAcceptedReview(): void
+    {
+        $reviewAssignment = $this->getCurrentReviewAssignment(self::REVIEWER_ID);
+
+        $this->confirmReview($reviewAssignment);
+
+        $this->assertMatchesRegularExpression('/^review-assignment-' . $reviewAssignment->getId() . '@.+$/', $this->getCalendarProperty('UID'));
+    }
+
+    public function testShouldNumberCalendarEventSequenceByTheSendingTime(): void
+    {
+        Carbon::setTestNow('2026-10-21 10:00:00');
+
+        $this->confirmReview($this->getCurrentReviewAssignment(self::REVIEWER_ID));
+
+        $this->assertEquals(Carbon::now()->getTimestamp(), (int) $this->getCalendarProperty('SEQUENCE'));
     }
 }

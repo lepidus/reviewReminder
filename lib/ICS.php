@@ -85,6 +85,8 @@ class ICS
       'location',
       'summary',
       'organizer',
+      'sequence',
+      'uid',
       'url'
     );
 
@@ -131,7 +133,7 @@ class ICS
 
         // Set some default values
         $props['DTSTAMP'] = $this->format_timestamp('now');
-        $props['UID'] = uniqid();
+        $props['UID'] ??= uniqid();
 
         // Append properties
         foreach ($props as $k => $v) {
@@ -157,6 +159,9 @@ class ICS
                 break;
             case 'organizer':
                 $val = $this->format_organizer($val);
+                break;
+            case 'sequence':
+                $val = (int) $val;
                 break;
             default:
                 $val = $this->escape_string($val);

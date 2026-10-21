@@ -4,6 +4,8 @@ namespace APP\plugins\generic\reviewReminder\classes;
 
 use APP\facades\Repo;
 use APP\core\Application;
+use Carbon\Carbon;
+use PKP\config\Config;
 use Illuminate\Support\Facades\Mail;
 use APP\plugins\generic\reviewReminder\classes\mail\mailables\ReviewReminder;
 use APP\plugins\generic\reviewReminder\lib\ICS;
@@ -73,6 +75,8 @@ class ReviewReminderService
                     'journalName' => $this->context->getLocalizedName()
                 ]
             ),
+            'uid' => 'review-assignment-' . $this->reviewAssignment->getId() . '@' . $this->getHost(),
+            'sequence' => Carbon::now()->getTimestamp(),
             'organizer' => [
                 'name' => $this->context->getLocalizedName(),
                 'email' => $this->context->getData('contactEmail'),
@@ -80,6 +84,11 @@ class ReviewReminderService
         ));
 
         return ReminderFile::contents($ics);
+    }
+
+    private function getHost(): string
+    {
+        return parse_url(Config::getVar('general', 'base_url'), PHP_URL_HOST) ?: 'localhost';
     }
 
     private function getReviewUrl()
