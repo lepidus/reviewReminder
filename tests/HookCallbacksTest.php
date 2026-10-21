@@ -190,7 +190,7 @@ class HookCallbacksTest extends PKPTestCase
     private function getCalendarInvite(Mailable $mailable): string
     {
         $this->assertCount(1, $mailable->rawAttachments);
-        return $mailable->rawAttachments[0]['data'];
+        return str_replace("\r\n ", '', $mailable->rawAttachments[0]['data']);
     }
 
     public function testShouldAttachCalendarInviteWithoutWritingFileToDisk(): void

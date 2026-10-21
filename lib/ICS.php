@@ -72,8 +72,10 @@ use DateTime;
 
 class ICS
 {
-    public const DT_FORMAT = 'Ymd\THis';
+    public const DT_FORMAT = 'Ymd\THis\Z';
     public const DATE_FORMAT = 'Ymd';
+    public const PRODID = '-//Lepidus Tecnologia//Review Reminder//EN';
+    public const MAX_LINE_OCTETS = 75;
 
     protected $properties = [];
     private $available_properties = [
@@ -104,24 +106,20 @@ class ICS
         }
     }
 
-    public function to_string($timezone)
+    public function to_string()
     {
-        $rows = $this->build_props($timezone);
-        return implode("\r\n", $rows);
+        $rows = $this->build_props();
+        return implode("\r\n", array_map([$this, 'fold_line'], $rows));
     }
 
-    private function build_props($timezone)
+    private function build_props()
     {
         // Build ICS properties - add header
         $ics_props = [
             'BEGIN:VCALENDAR',
             'VERSION:2.0',
-            'PRODID:-//hacksw/handcal//NONSGML v1.0//EN',
+            'PRODID:' . self::PRODID,
             'CALSCALE:GREGORIAN',
-            'BEGIN:VTIMEZONE',
-            'TZID:' . $timezone,
-            'X-LIC-LOCATION:' . $timezone,
-            'END:VTIMEZONE',
             'BEGIN:VEVENT'
         ];
 
@@ -137,7 +135,7 @@ class ICS
 
         // Append properties
         foreach ($props as $k => $v) {
-            $ics_props[] = $k === 'ORGANIZER' ? "{$k};CN={$v}" : "{$k}:{$v}";
+            $ics_props[] = $k === 'ORGANIZER' ? "{$k};{$v}" : "{$k}:{$v}";
         }
 
         // Build ICS properties - add footer
@@ -156,6 +154,9 @@ class ICS
             case 'dtend':
             case 'dtstart':
                 $val = $this->format_date($val);
+                break;
+            case 'organizer':
+                $val = $this->format_organizer($val);
                 break;
             default:
                 $val = $this->escape_string($val);
@@ -186,11 +187,34 @@ class ICS
     private function format_timestamp($timestamp)
     {
         $dt = new DateTime($timestamp);
-        return $dt->format(self::DT_FORMAT);
+        return gmdate(self::DT_FORMAT, $dt->getTimestamp());
+    }
+
+    private function format_organizer($organizer)
+    {
+        $name = preg_replace('/["\x00-\x1F\x7F]/', '', $organizer['name']);
+        return 'CN="' . $name . '":mailto:' . $organizer['email'];
     }
 
     private function escape_string($str)
     {
-        return preg_replace('/([\,;])/', '\\\$1', $str);
+        return str_replace(
+            ['\\', ';', ',', "\r\n", "\r", "\n"],
+            ['\\\\', '\;', '\,', '\n', '\n', '\n'],
+            $str
+        );
+    }
+
+    private function fold_line($line)
+    {
+        $folded_lines = [];
+        while (strlen($line) > self::MAX_LINE_OCTETS) {
+            $chunk = mb_strcut($line, 0, self::MAX_LINE_OCTETS, 'UTF-8');
+            $folded_lines[] = $chunk;
+            $line = ' ' . substr($line, strlen($chunk));
+        }
+        $folded_lines[] = $line;
+
+        return implode("\r\n", $folded_lines);
     }
 }

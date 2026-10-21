@@ -29,7 +29,7 @@ class ReviewReminderService
 
     private function createICalendar(): ICS
     {
-        $submissionTitle = $this->escapeICalendarTitle($this->submission->getCurrentPublication()->getLocalizedTitle());
+        $submissionTitle = $this->submission->getCurrentPublication()->getLocalizedTitle();
         $reviewDueDate = new \DateTimeImmutable($this->reviewAssignment->getDateDue());
 
         $ics = new ICS([
@@ -49,19 +49,13 @@ class ReviewReminderService
                     'journalName' => $this->context->getLocalizedName()
                 ]
             ),
-            'organizer' => $this->context->getLocalizedName() . ':mailto:' . $this->context->getData('contactEmail'),
+            'organizer' => [
+                'name' => $this->context->getLocalizedName(),
+                'email' => $this->context->getData('contactEmail'),
+            ],
         ]);
 
         return $ics;
-    }
-
-    private function escapeICalendarTitle(string $title): string
-    {
-        return str_replace(
-            ['\\', "\r\n", "\r", "\n"],
-            ['\\\\', '\\n', '\\n', '\\n'],
-            $title
-        );
     }
 
     private function getReviewUrl()
