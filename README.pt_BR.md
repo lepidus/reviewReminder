@@ -19,7 +19,7 @@ Os dois recursos são ativados, por revista, ao ativar o plugin. O lembrete sema
 
 Exemplo do email, enviado no idioma principal da revista e tendo o contato principal da revista como remetente:
 
-> **Assunto:** Lembrete de Avaliações Pendentes
+> **Assunto:** Lembrete de Avaliações Pendentes - Revista Exemplo
 >
 > Prezado(a) Maria Silva,
 >

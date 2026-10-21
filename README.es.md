@@ -19,7 +19,7 @@ Ambas funciones se habilitan, por revista, al activar el plugin. El recordatorio
 
 Ejemplo del correo, enviado en el idioma principal de la revista y con el contacto principal de la revista como remitente:
 
-> **Asunto:** Recordatorio de Revisiones Pendientes
+> **Asunto:** Recordatorio de Revisiones Pendientes - Revista de Ejemplo
 >
 > Estimado/a Maria Silva,
 >

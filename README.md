@@ -19,7 +19,7 @@ Both features are enabled, per journal, by enabling the plugin. The weekly remin
 
 Example of the email, sent in the journal's primary language with the journal's primary contact as sender:
 
-> **Subject:** Pending Reviews Reminder
+> **Subject:** Pending Reviews Reminder - Example Journal
 >
 > Dear Maria Silva,
 >

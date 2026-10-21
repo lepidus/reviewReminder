@@ -46,6 +46,7 @@ class PendingReviewsEmailBuilder
                 ?? $emailTemplate->getLocalizedData('body', $this->locale)
         );
         $email->setLocale($this->locale);
+        $email->setData($this->locale);
 
         return $email;
     }
