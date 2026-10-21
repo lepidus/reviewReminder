@@ -16,6 +16,7 @@ use PKP\facades\Locale;
 use PKP\log\event\PKPSubmissionEventLogEntry;
 use PKP\submission\reviewAssignment\ReviewAssignment;
 use PKP\submission\reviewer\ReviewerAction;
+use PKP\submission\reviewer\form\PKPReviewerReviewStep1Form;
 use PKP\tests\PKPTestCase;
 
 class HookCallbacksTest extends PKPTestCase
@@ -26,6 +27,7 @@ class HookCallbacksTest extends PKPTestCase
     private const NAMESAKE_REVIEWER_ID = 10;
     private const NEW_ROUND_DUE_DATE = '2027-03-15 00:00:00';
     private const NEW_ROUND_CALENDAR_START = 'DTSTART;VALUE=DATE:20270315';
+    private const PREVIOUS_ROUND_CALENDAR_START = 'DTSTART;VALUE=DATE:20260828';
     private const END_OF_MONTH_DUE_DATE = '2027-02-28 00:00:00';
     private const END_OF_MONTH_CALENDAR_START = 'DTSTART;VALUE=DATE:20270228';
     private const END_OF_MONTH_CALENDAR_END = 'DTEND;VALUE=DATE:20270301';
@@ -193,14 +195,24 @@ class HookCallbacksTest extends PKPTestCase
         $this->updateSubmissionTitle("Injected title\r\n" . self::INJECTED_CALENDAR_PROPERTY);
     }
 
-    private function confirmReview(ReviewAssignment $reviewAssignment): void
+    private function confirmReview(ReviewAssignment $reviewAssignment, ?HookCallbacks $hookCallbacks = null): void
     {
         $this->confirmedReviewAssignmentIds[] = $reviewAssignment->getId();
         $submission = Repo::submission()->get(self::SUBMISSION_ID);
         $mailable = (new ReviewerAction())->getResponseEmail($submission, $reviewAssignment, false, null);
         $request = $this->createContextRequest();
 
-        (new HookCallbacks())->sendReviewReminder('ReviewerAction::confirmReview', [$request, $submission, $mailable, false]);
+        ($hookCallbacks ?? new HookCallbacks())->sendReviewReminder('ReviewerAction::confirmReview', [$request, $submission, $mailable, false]);
+    }
+
+    private function acceptThroughReviewForm(ReviewAssignment $reviewAssignment): void
+    {
+        $hookCallbacks = new HookCallbacks();
+        $reviewForm = new PKPReviewerReviewStep1Form($this->createContextRequest(), Repo::submission()->get(self::SUBMISSION_ID), $reviewAssignment);
+        $formVariables = [];
+        $hookCallbacks->rememberReviewBeingAccepted('pkpreviewerreviewstep1form::readuservars', [$reviewForm, &$formVariables]);
+
+        $this->confirmReview($reviewAssignment, $hookCallbacks);
     }
 
     private function getSentReminder(): ReviewReminder
@@ -340,5 +352,15 @@ class HookCallbacksTest extends PKPTestCase
         $calendarInvite = str_replace("\r\n ", '', $this->getSentReminder()->rawAttachments[0]['data']);
         $this->assertStringContainsString(self::REVIEW_PAGE_PATH, $calendarInvite);
         $this->assertStringNotContainsString('key=', $calendarInvite);
+    }
+
+    public function testShouldRemindDueDateOfPreviousRoundAcceptedAfterReviewerIsAssignedToANewRound(): void
+    {
+        $previousRoundAssignment = $this->getCurrentReviewAssignment(self::REVIEWER_ID);
+        $this->assignReviewerToNewReviewRound(self::REVIEWER_ID);
+
+        $this->acceptThroughReviewForm($previousRoundAssignment);
+
+        $this->assertStringContainsString(self::PREVIOUS_ROUND_CALENDAR_START, $this->getSentReminder()->rawAttachments[0]['data']);
     }
 }

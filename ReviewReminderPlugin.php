@@ -39,6 +39,7 @@ class ReviewReminderPlugin extends GenericPlugin
 
         if ($this->getEnabled()) {
             $hookCallbacks = new HookCallbacks();
+            Hook::add('pkpreviewerreviewstep1form::readuservars', [$hookCallbacks, 'rememberReviewBeingAccepted']);
             Hook::add('ReviewerAction::confirmReview', [$hookCallbacks, 'sendReviewReminder']);
             Hook::add('TemplateManager::fetch', [new ReviewHistory($this), 'addReminders']);
         }
