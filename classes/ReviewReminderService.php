@@ -17,18 +17,16 @@ class ReviewReminderService
     private $reviewAssignment;
     private $reviewer;
     private $reviewDueDate;
-    private $oneClickReviewerUrl;
 
     private const EMAIL_TEMPLATE_KEY = 'REVIEW_REMINDER';
 
-    public function __construct($context, $reviewAssignment, $reviewer, $reviewDueDate, $oneClickReviewerUrl)
+    public function __construct($context, $reviewAssignment, $reviewer, $reviewDueDate)
     {
         $this->context = $context;
         $this->submission = Repo::submission()->get((int) $reviewAssignment->getSubmissionId());
         $this->reviewAssignment = $reviewAssignment;
         $this->reviewer = $reviewer;
         $this->reviewDueDate = $reviewDueDate;
-        $this->oneClickReviewerUrl = $oneClickReviewerUrl;
     }
 
     public function sendReviewReminder()
@@ -63,7 +61,7 @@ class ReviewReminderService
                 'plugins.generic.reviewReminder.ics.description',
                 [
                     'submissionTitle' => $submissionTitle,
-                    'submissionReviewUrl' => $this->oneClickReviewerUrl ?? $this->getReviewUrl()
+                    'submissionReviewUrl' => $this->getReviewUrl()
                 ]
             ),
             'dtstart' => $reviewDueDate->format('Y-m-d'),

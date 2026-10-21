@@ -33,6 +33,9 @@ class HookCallbacksTest extends PKPTestCase
     private const OVERDUE_CALENDAR_START = 'DTSTART;VALUE=DATE:20200110';
     private const OVERDUE_CALENDAR_END = 'DTEND;VALUE=DATE:20200111';
     private const INJECTED_CALENDAR_PROPERTY = 'X-INJECTED-PROPERTY:injected';
+    private const CONTEXT_ID = 1;
+    private const ONE_CLICK_ACCESS_SETTING = 'reviewerAccessKeysEnabled';
+    private const REVIEW_PAGE_PATH = '/reviewer/submission?submissionId=7';
     private const CALENDAR_EVENT_NAME = 'SUMMARY:Review deadline: Developing efficacy beliefs in the classroom (Journal of Public Knowledge)';
 
     private $reviewAssignmentDao;
@@ -42,6 +45,7 @@ class HookCallbacksTest extends PKPTestCase
     private $confirmedReviewAssignmentIds = [];
     private $originalSubmissionTitle;
     private $lastEventLogIdBeforeTest;
+    private $oneClickAccessSettingBeforeTest;
 
     protected function getMockedRegistryKeys(): array
     {
@@ -54,12 +58,17 @@ class HookCallbacksTest extends PKPTestCase
         $this->reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
         Locale::registerPath('plugins/generic/reviewReminder/locale');
         $this->lastEventLogIdBeforeTest = DB::table('event_log')->max('log_id');
+        $this->oneClickAccessSettingBeforeTest = DB::table('journal_settings')
+            ->where('journal_id', self::CONTEXT_ID)
+            ->where('setting_name', self::ONE_CLICK_ACCESS_SETTING)
+            ->value('setting_value');
         Mail::fake();
     }
 
     protected function tearDown(): void
     {
         DB::table('access_keys')->whereIn('assoc_id', $this->confirmedReviewAssignmentIds)->delete();
+        $this->setOneClickReviewerAccess($this->oneClickAccessSettingBeforeTest);
 
         $createdEventLogIds = DB::table('event_log')->where('log_id', '>', $this->lastEventLogIdBeforeTest)->pluck('log_id');
         DB::table('event_log_settings')->whereIn('log_id', $createdEventLogIds)->delete();
@@ -103,6 +112,22 @@ class HookCallbacksTest extends PKPTestCase
         $request->setRouter($router);
 
         return $request;
+    }
+
+    private function setOneClickReviewerAccess(?string $value): void
+    {
+        DB::table('journal_settings')
+            ->where('journal_id', self::CONTEXT_ID)
+            ->where('setting_name', self::ONE_CLICK_ACCESS_SETTING)
+            ->delete();
+        if ($value !== null) {
+            DB::table('journal_settings')->insert([
+                'journal_id' => self::CONTEXT_ID,
+                'locale' => '',
+                'setting_name' => self::ONE_CLICK_ACCESS_SETTING,
+                'setting_value' => $value,
+            ]);
+        }
     }
 
     private function getCurrentReviewAssignment(int $reviewerId): ReviewAssignment
@@ -294,5 +319,26 @@ class HookCallbacksTest extends PKPTestCase
         $calendarLines = explode("\r\n", $this->getSentReminder()->rawAttachments[0]['data']);
         $this->assertContains(self::OVERDUE_CALENDAR_START, $calendarLines);
         $this->assertContains(self::OVERDUE_CALENDAR_END, $calendarLines);
+    }
+
+    public function testShouldNotCreateAccessKeyOnReviewAcceptanceWhenOneClickReviewerAccessIsEnabled(): void
+    {
+        $this->setOneClickReviewerAccess('1');
+        $reviewAssignment = $this->getCurrentReviewAssignment(self::REVIEWER_ID);
+
+        $this->confirmReview($reviewAssignment);
+
+        $this->assertFalse(DB::table('access_keys')->where('assoc_id', $reviewAssignment->getId())->exists());
+    }
+
+    public function testShouldLinkCalendarInviteToReviewPageWhenOneClickReviewerAccessIsEnabled(): void
+    {
+        $this->setOneClickReviewerAccess('1');
+
+        $this->confirmReview($this->getCurrentReviewAssignment(self::REVIEWER_ID));
+
+        $calendarInvite = str_replace("\r\n ", '', $this->getSentReminder()->rawAttachments[0]['data']);
+        $this->assertStringContainsString(self::REVIEW_PAGE_PATH, $calendarInvite);
+        $this->assertStringNotContainsString('key=', $calendarInvite);
     }
 }

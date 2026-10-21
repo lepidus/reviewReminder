@@ -31,7 +31,7 @@ Exemplo do email enviado quando o avaliador aceita a solicitação:
 >
 > Você também pode utilizar o lembrete em anexo para adicionar esse evento ao calendário de sua preferência.
 
-O arquivo `invite.ics` contém um evento com o título "Prazo de avaliação: <título da submissão> (<nome da revista>)", que ocupa o dia inteiro do **prazo de conclusão da avaliação**. A descrição do evento traz o link para a avaliação. Quando o **Acesso do avaliador com um clique** está habilitado, esse link abre a avaliação sem login. O plugin não define alarmes nem atualiza o evento se o prazo mudar.
+O arquivo `invite.ics` contém um evento com o título "Prazo de avaliação: <título da submissão> (<nome da revista>)", que ocupa o dia inteiro do **prazo de conclusão da avaliação**. A descrição do evento traz o link para a avaliação. O link pede login ao avaliador mesmo com o **Acesso do avaliador com um clique** habilitado, porque eventos de calendário costumam ser sincronizados e compartilhados. O plugin não define alarmes nem atualiza o evento se o prazo mudar.
 
 ## Lembrete semanal
 
@@ -67,10 +67,6 @@ Se o servidor executa as tarefas agendadas por cron em vez do Acron, inclua expl
 ## Instalação
 
 Instale o **Review Reminder** pela Galeria de Plugins em **Website > Plugins**, ou baixe o pacote `.tar.gz` para OJS 3.4 na [página de versões](https://github.com/lepidus/reviewReminder/releases) e envie-o em **Enviar um novo plugin**. Depois, ative-o em cada revista que precisar dele e confirme que o OJS envia emails.
-
-Opcionalmente, habilite o **Acesso do avaliador com um clique** em **Fluxo de trabalho > Avaliação > Configuração**.
-
-![Como habilitar o acesso do avaliador com um clique](https://i.imgur.com/cHjoXsI.gif)
 
 Ao desativar o plugin em uma revista, os dois emails deixam de ser enviados para ela. Avaliações, prazos e eventos já importados não são alterados.
 

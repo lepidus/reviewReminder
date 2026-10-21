@@ -31,7 +31,7 @@ Ejemplo del correo enviado cuando el revisor acepta la solicitud:
 >
 > También puede utilizar el recordatorio adjunto para añadir este evento al calendario que prefiera.
 
-El archivo `invite.ics` contiene un evento titulado "Plazo de revisión: <título del envío> (<nombre de la revista>)", que ocupa todo el día del **plazo para completar la revisión**. La descripción del evento enlaza a la revisión. Cuando el **Acceso del revisor con un clic** está habilitado, ese enlace abre la revisión sin iniciar sesión. El plugin no define alarmas ni actualiza el evento si el plazo cambia.
+El archivo `invite.ics` contiene un evento titulado "Plazo de revisión: <título del envío> (<nombre de la revista>)", que ocupa todo el día del **plazo para completar la revisión**. La descripción del evento enlaza a la revisión. El enlace pide al revisor iniciar sesión incluso con el **Acceso del revisor con un clic** habilitado, porque los eventos de calendario suelen sincronizarse y compartirse. El plugin no define alarmas ni actualiza el evento si el plazo cambia.
 
 ## Recordatorio semanal
 
@@ -67,10 +67,6 @@ Si el servidor ejecuta las tareas programadas por cron en lugar de Acron, incluy
 ## Instalación
 
 Instale **Review Reminder** desde la Galería de plugins en **Sitio web > Plugins**, o descargue el paquete `.tar.gz` para OJS 3.4 en la [página de versiones](https://github.com/lepidus/reviewReminder/releases) y cárguelo con **Subir un nuevo plugin**. Después, actívelo en cada revista que lo necesite y compruebe que OJS envía correos.
-
-Opcionalmente, habilite el **Acceso del revisor con un clic** en **Flujo de trabajo > Revisión > Configuración**.
-
-![Cómo habilitar el acceso del revisor con un clic](https://i.imgur.com/cHjoXsI.gif)
 
 Al desactivar el plugin en una revista, ambos correos dejan de enviarse para ella. Las revisiones, los plazos y los eventos ya importados no se modifican.
 

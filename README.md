@@ -31,7 +31,7 @@ Example of the email sent when the reviewer accepts the request:
 >
 > You can also use the attached reminder to add this event to your preferred calendar.
 
-The `invite.ics` file contains an event titled "Review deadline: <submission title> (<journal name>)", which takes the whole day of the **review completion deadline**. The event description links to the review. When **One-click Reviewer Access** is enabled, that link opens the review without signing in. The plugin sets no alarms and does not update the event if the deadline changes.
+The `invite.ics` file contains an event titled "Review deadline: <submission title> (<journal name>)", which takes the whole day of the **review completion deadline**. The event description links to the review. The link asks the reviewer to sign in even when **One-click Reviewer Access** is enabled, because calendar events are often synced and shared. The plugin sets no alarms and does not update the event if the deadline changes.
 
 ## Weekly reminder
 
@@ -67,10 +67,6 @@ If the server runs scheduled tasks through cron instead of Acron, add the plugin
 ## Installation
 
 Install **Review Reminder** from the Plugin Gallery in **Website > Plugins**, or download the `.tar.gz` package for OJS 3.4 from the [Releases page](https://github.com/lepidus/reviewReminder/releases) and upload it with **Upload a New Plugin**. Then enable it in each journal that needs it and make sure OJS can send emails.
-
-Optionally, enable **One-click Reviewer Access** in **Workflow > Review > Setup**.
-
-![How to enable One-click Reviewer Access](https://i.imgur.com/cHjoXsI.gif)
 
 Disabling the plugin in a journal stops both emails for that journal. Reviews, deadlines, and already imported events are not changed.
 
