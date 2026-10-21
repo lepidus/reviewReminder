@@ -215,6 +215,11 @@ class HookCallbacksTest extends PKPTestCase
         $this->confirmReview($reviewAssignment, $hookCallbacks);
     }
 
+    private function getCalendarInvite(): string
+    {
+        return str_replace("\r\n ", '', $this->getSentReminder()->rawAttachments[0]['data']);
+    }
+
     private function getSentReminder(): ReviewReminder
     {
         $sentReminders = Mail::sent(ReviewReminder::class);
@@ -228,8 +233,7 @@ class HookCallbacksTest extends PKPTestCase
 
         $this->confirmReview($newRoundAssignment);
 
-        $calendarInvite = $this->getSentReminder()->rawAttachments[0];
-        $this->assertStringContainsString(self::NEW_ROUND_CALENDAR_START, $calendarInvite['data']);
+        $this->assertStringContainsString(self::NEW_ROUND_CALENDAR_START, $this->getCalendarInvite());
     }
 
     public function testShouldRemindReviewerWhoAcceptedWhenAnotherReviewerHasTheSameName(): void
@@ -260,7 +264,7 @@ class HookCallbacksTest extends PKPTestCase
 
         $this->confirmReview($this->getCurrentReviewAssignment(self::REVIEWER_ID));
 
-        $calendarLines = explode("\r\n", $this->getSentReminder()->rawAttachments[0]['data']);
+        $calendarLines = explode("\r\n", $this->getCalendarInvite());
         $injectedLines = array_filter(
             $calendarLines,
             fn (string $line) => str_starts_with($line, self::INJECTED_CALENDAR_PROPERTY)
@@ -312,14 +316,14 @@ class HookCallbacksTest extends PKPTestCase
     {
         $this->confirmReview($this->getCurrentReviewAssignment(self::REVIEWER_ID));
 
-        $this->assertContains(self::CALENDAR_EVENT_NAME, explode("\r\n", $this->getSentReminder()->rawAttachments[0]['data']));
+        $this->assertContains(self::CALENDAR_EVENT_NAME, explode("\r\n", $this->getCalendarInvite()));
     }
 
     public function testShouldPlaceCalendarEventOnTheReviewDueDateOnly(): void
     {
         $this->confirmReview($this->assignReviewerToNewReviewRound(self::REVIEWER_ID, self::END_OF_MONTH_DUE_DATE));
 
-        $calendarLines = explode("\r\n", $this->getSentReminder()->rawAttachments[0]['data']);
+        $calendarLines = explode("\r\n", $this->getCalendarInvite());
         $this->assertContains(self::END_OF_MONTH_CALENDAR_START, $calendarLines);
         $this->assertContains(self::END_OF_MONTH_CALENDAR_END, $calendarLines);
     }
@@ -328,7 +332,7 @@ class HookCallbacksTest extends PKPTestCase
     {
         $this->confirmReview($this->assignReviewerToNewReviewRound(self::REVIEWER_ID, self::OVERDUE_DUE_DATE));
 
-        $calendarLines = explode("\r\n", $this->getSentReminder()->rawAttachments[0]['data']);
+        $calendarLines = explode("\r\n", $this->getCalendarInvite());
         $this->assertContains(self::OVERDUE_CALENDAR_START, $calendarLines);
         $this->assertContains(self::OVERDUE_CALENDAR_END, $calendarLines);
     }
@@ -349,7 +353,7 @@ class HookCallbacksTest extends PKPTestCase
 
         $this->confirmReview($this->getCurrentReviewAssignment(self::REVIEWER_ID));
 
-        $calendarInvite = str_replace("\r\n ", '', $this->getSentReminder()->rawAttachments[0]['data']);
+        $calendarInvite = $this->getCalendarInvite();
         $this->assertStringContainsString(self::REVIEW_PAGE_PATH, $calendarInvite);
         $this->assertStringNotContainsString('key=', $calendarInvite);
     }
@@ -361,6 +365,6 @@ class HookCallbacksTest extends PKPTestCase
 
         $this->acceptThroughReviewForm($previousRoundAssignment);
 
-        $this->assertStringContainsString(self::PREVIOUS_ROUND_CALENDAR_START, $this->getSentReminder()->rawAttachments[0]['data']);
+        $this->assertStringContainsString(self::PREVIOUS_ROUND_CALENDAR_START, $this->getCalendarInvite());
     }
 }
