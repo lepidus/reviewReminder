@@ -15,7 +15,7 @@ Este README describe la versión para **OJS 3.4.0.x**. El plugin envía dos corr
 
 Ambos correos se habilitan, por revista, al activar el plugin. El recordatorio semanal puede desactivarse en **Flujo de trabajo > Revisión > Configuración**, al final del formulario, sin afectar el recordatorio enviado al aceptar. La opción aparece mientras el plugin está activado. El día del recordatorio semanal no se puede cambiar.
 
-Ambos correos tienen como remitente al contacto principal de la revista. El recordatorio enviado al aceptar usa el idioma en que el revisor está usando OJS, y el recordatorio semanal usa el idioma principal de la revista. La revista puede editar y traducir el recordatorio semanal en **Flujo de trabajo > Correos electrónicos**, plantilla *Recordatorio de Revisiones Pendientes*. El texto del recordatorio enviado al aceptar viene del plugin y no se puede editar. Cada envío se registra en el *Registro de actividad* del envío y aparece en el *Historial* de la revisión, en un bloque separado de los recordatorios de OJS.
+Ambos correos tienen como remitente al contacto principal de la revista. El recordatorio enviado al aceptar usa el idioma en que el revisor está usando OJS, y el recordatorio semanal usa el idioma principal de la revista. La revista puede editar y traducir ambos correos en **Flujo de trabajo > Correos electrónicos**, plantillas *Recordatorio de Aceptación de la Revisión* y *Recordatorio de Revisiones Pendientes*. Cada envío se registra en el *Registro de actividad* del envío y aparece en el *Historial* de la revisión, en un bloque separado de los recordatorios de OJS.
 
 ## Recordatorio de revisión
 

@@ -1,8 +1,8 @@
 msgid "emails.reviewReminder.name"
-msgstr "Lembrete de Avaliação"
+msgstr "Lembrete de Aceite da Avaliação"
 
 msgid "emails.reviewReminder.description"
-msgstr "Modelo de e-mail utilizado para notificar avaliadores sobre suas designações de avaliação"
+msgstr "Enviado pelo plugin Review Reminder ao avaliador que aceita uma solicitação de avaliação, com o convite de calendário da avaliação anexado."
 
 msgid "emails.reviewReminder.subject"
 msgstr "Lembrete de Avaliação"

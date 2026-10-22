@@ -19,6 +19,7 @@ use PKP\plugins\Hook;
 use Illuminate\Support\Facades\DB;
 use APP\plugins\generic\reviewReminder\classes\HookCallbacks;
 use APP\plugins\generic\reviewReminder\classes\mail\mailables\PendingReviewsReminder;
+use APP\plugins\generic\reviewReminder\classes\mail\mailables\ReviewReminder;
 use APP\plugins\generic\reviewReminder\classes\PendingReviewsReminderSetting;
 use APP\plugins\generic\reviewReminder\classes\ReviewHistory;
 
@@ -50,7 +51,7 @@ class ReviewReminderPlugin extends GenericPlugin
     public function addMailables($hookName, $args)
     {
         $mailables = $args[0];
-        $mailables->push(PendingReviewsReminder::class);
+        $mailables->push(ReviewReminder::class, PendingReviewsReminder::class);
 
         return Hook::CONTINUE;
     }

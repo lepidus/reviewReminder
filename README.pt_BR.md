@@ -15,7 +15,7 @@ Este README descreve a versão para **OJS 3.4.0.x**. O plugin envia dois emails 
 
 Os dois emails são ativados, por revista, ao ativar o plugin. O lembrete semanal pode ser desligado em **Fluxo de Trabalho > Avaliação > Configurar**, no fim do formulário, sem afetar o lembrete enviado no aceite. A opção aparece enquanto o plugin está ativado. O dia do lembrete semanal não pode ser alterado.
 
-Os dois emails têm o contato principal da revista como remetente. O lembrete enviado no aceite usa o idioma em que o avaliador está usando o OJS, e o lembrete semanal usa o idioma principal da revista. A revista pode editar e traduzir o lembrete semanal em **Fluxo de Trabalho > E-mails**, no modelo *Lembrete de Avaliações Pendentes*. O texto do lembrete enviado no aceite vem do plugin e não pode ser editado. Cada envio é registrado no *Histórico de atividades* da submissão e aparece no *Histórico* da avaliação, em um bloco separado dos lembretes do OJS.
+Os dois emails têm o contato principal da revista como remetente. O lembrete enviado no aceite usa o idioma em que o avaliador está usando o OJS, e o lembrete semanal usa o idioma principal da revista. A revista pode editar e traduzir os dois emails em **Fluxo de Trabalho > E-mails**, nos modelos *Lembrete de Aceite da Avaliação* e *Lembrete de Avaliações Pendentes*. Cada envio é registrado no *Histórico de atividades* da submissão e aparece no *Histórico* da avaliação, em um bloco separado dos lembretes do OJS.
 
 ## Lembrete de avaliação
 

@@ -48,6 +48,7 @@ class HookCallbacksTest extends PKPTestCase
     private $originalSubmissionTitle;
     private $lastEventLogIdBeforeTest;
     private $oneClickAccessSettingBeforeTest;
+    private $customizedTemplateId;
 
     protected function getMockedRegistryKeys(): array
     {
@@ -70,6 +71,10 @@ class HookCallbacksTest extends PKPTestCase
     protected function tearDown(): void
     {
         DB::table('access_keys')->whereIn('assoc_id', $this->confirmedReviewAssignmentIds)->delete();
+        if ($this->customizedTemplateId) {
+            DB::table('email_templates_settings')->where('email_id', $this->customizedTemplateId)->delete();
+            DB::table('email_templates')->where('email_id', $this->customizedTemplateId)->delete();
+        }
         $this->setOneClickReviewerAccess($this->oneClickAccessSettingBeforeTest);
         Carbon::setTestNow();
 
@@ -227,6 +232,18 @@ class HookCallbacksTest extends PKPTestCase
         $this->assertCount(1, $propertyLines);
 
         return substr($propertyLines[0], strlen($propertyName) + 1);
+    }
+
+    private function customizeAcceptanceReminderTemplate(string $subject, string $body): void
+    {
+        $this->customizedTemplateId = DB::table('email_templates')->insertGetId([
+            'email_key' => 'REVIEW_REMINDER',
+            'context_id' => self::CONTEXT_ID,
+        ], 'email_id');
+        DB::table('email_templates_settings')->insert([
+            ['email_id' => $this->customizedTemplateId, 'locale' => 'en', 'setting_name' => 'subject', 'setting_value' => $subject],
+            ['email_id' => $this->customizedTemplateId, 'locale' => 'en', 'setting_name' => 'body', 'setting_value' => $body],
+        ]);
     }
 
     private function getSentReminder(): ReviewReminder
@@ -394,5 +411,16 @@ class HookCallbacksTest extends PKPTestCase
         $this->confirmReview($this->getCurrentReviewAssignment(self::REVIEWER_ID));
 
         $this->assertEquals(Carbon::now()->getTimestamp(), (int) $this->getCalendarProperty('SEQUENCE'));
+    }
+
+    public function testShouldSendAcceptanceReminderWithTheTemplateCustomizedByTheJournal(): void
+    {
+        $this->customizeAcceptanceReminderTemplate('Customized acceptance reminder', 'Customized body for {$reviewerName}');
+
+        $this->confirmReview($this->getCurrentReviewAssignment(self::REVIEWER_ID));
+
+        $reminder = $this->getSentReminder();
+        $this->assertEquals('Customized acceptance reminder', $reminder->subject);
+        $this->assertEquals('Customized body for {$reviewerName}', $reminder->view);
     }
 }

@@ -4,6 +4,7 @@ use APP\core\Application;
 use APP\core\PageRouter;
 use APP\facades\Repo;
 use APP\plugins\generic\reviewReminder\classes\mail\mailables\PendingReviewsReminder;
+use APP\plugins\generic\reviewReminder\classes\mail\mailables\ReviewReminder;
 use APP\plugins\generic\reviewReminder\ReviewReminderPlugin;
 use Illuminate\Support\Facades\DB;
 use PKP\core\Dispatcher;
@@ -181,5 +182,12 @@ class ReviewReminderPluginTest extends PKPTestCase
         $this->registerPluginInJournal(false);
 
         $this->assertNotContains(PendingReviewsReminder::class, $this->getJournalEmails());
+    }
+
+    public function testShouldListAcceptanceReminderAmongJournalEmails(): void
+    {
+        $this->registerPluginInJournal(true);
+
+        $this->assertContains(ReviewReminder::class, $this->getJournalEmails());
     }
 }

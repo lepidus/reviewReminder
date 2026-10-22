@@ -1,8 +1,8 @@
 msgid "emails.reviewReminder.name"
-msgstr "Review Reminder"
+msgstr "Review Acceptance Reminder"
 
 msgid "emails.reviewReminder.description"
-msgstr "Email template used to notify reviewers of their review assignments"
+msgstr "Sent by the Review Reminder plugin to the reviewer who accepts a review request, with the review's calendar invitation attached."
 
 msgid "emails.reviewReminder.subject"
 msgstr "Review Reminder"
