@@ -13,7 +13,7 @@ This README describes the version for **OJS 3.5.0-4 or later**. The plugin adds 
 | Calendar attachment | Review invitation (including a subsequent round) or manual reminder sent by an editor | An `invite.ics` file attached to the OJS email itself |
 | Weekly reminder | Once a week, from Monday 00:00 | One email per journal listing pending reviews |
 
-Both features are enabled, per journal, by enabling the plugin. The weekly reminder can be turned off in the plugin's **Settings**, in **Website > Plugins > Installed Plugins**, without affecting the calendar attachment. The weekly reminder's day and time cannot be changed.
+Both features are enabled, per journal, by enabling the plugin. The weekly reminder can be turned off in **Workflow > Review > Setup**, below the reminders for review, without affecting the calendar attachment. The option is shown while the plugin is enabled. The weekly reminder's day and time cannot be changed.
 
 ## Weekly reminder
 

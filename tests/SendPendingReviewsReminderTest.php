@@ -71,7 +71,7 @@ class SendPendingReviewsReminderTest extends PKPTestCase
         $this->createRoutedRequest();
         $this->pluginSettingsDao = DAORegistry::getDAO('PluginSettingsDAO');
         $this->enabledSettingBeforeTest = $this->getPluginSetting(self::FIRST_CONTEXT_ID, 'enabled');
-        $this->weeklyReminderSettingBeforeTest = $this->getPluginSetting(self::FIRST_CONTEXT_ID, self::WEEKLY_REMINDER_SETTING);
+        $this->weeklyReminderSettingBeforeTest = $this->getWeeklyReminderJournalSetting(self::FIRST_CONTEXT_ID)->first();
         $this->lastSentSettingBeforeTest = $this->getPluginSetting(self::FIRST_CONTEXT_ID, self::LAST_SENT_SETTING);
         $this->pluginSettingsDao->deleteSetting(self::FIRST_CONTEXT_ID, self::PLUGIN_NAME, self::LAST_SENT_SETTING);
         Carbon::setTestNow(self::MONDAY_MIDNIGHT);
@@ -84,7 +84,10 @@ class SendPendingReviewsReminderTest extends PKPTestCase
     protected function tearDown(): void
     {
         $this->restorePluginSetting(self::FIRST_CONTEXT_ID, 'enabled', $this->enabledSettingBeforeTest);
-        $this->restorePluginSetting(self::FIRST_CONTEXT_ID, self::WEEKLY_REMINDER_SETTING, $this->weeklyReminderSettingBeforeTest);
+        $this->getWeeklyReminderJournalSetting(self::FIRST_CONTEXT_ID)->delete();
+        if ($this->weeklyReminderSettingBeforeTest) {
+            DB::table('journal_settings')->insert((array) $this->weeklyReminderSettingBeforeTest);
+        }
         $this->restorePluginSetting(self::FIRST_CONTEXT_ID, self::LAST_SENT_SETTING, $this->lastSentSettingBeforeTest);
         Carbon::setTestNow();
         Mail::swap($this->mailManagerBeforeTest);
@@ -167,14 +170,26 @@ class SendPendingReviewsReminderTest extends PKPTestCase
         $this->pluginSettingsDao->updateSetting($contextId, self::PLUGIN_NAME, self::LAST_SENT_SETTING, $dateTime, 'string');
     }
 
+    private function getWeeklyReminderJournalSetting(int $contextId)
+    {
+        return DB::table('journal_settings')
+            ->where('journal_id', $contextId)
+            ->where('setting_name', self::WEEKLY_REMINDER_SETTING);
+    }
+
     private function setWeeklyReminderEnabled(int $contextId, ?bool $isEnabled): void
     {
+        $this->getWeeklyReminderJournalSetting($contextId)->delete();
         if ($isEnabled === null) {
-            $this->pluginSettingsDao->deleteSetting($contextId, self::PLUGIN_NAME, self::WEEKLY_REMINDER_SETTING);
             return;
         }
 
-        $this->pluginSettingsDao->updateSetting($contextId, self::PLUGIN_NAME, self::WEEKLY_REMINDER_SETTING, $isEnabled, 'bool');
+        DB::table('journal_settings')->insert([
+            'journal_id' => $contextId,
+            'locale' => '',
+            'setting_name' => self::WEEKLY_REMINDER_SETTING,
+            'setting_value' => $isEnabled ? '1' : '0',
+        ]);
     }
 
     private function createSecondContextWithSharedReviewer(): void

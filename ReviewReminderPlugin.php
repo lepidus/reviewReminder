@@ -18,14 +18,11 @@ namespace APP\plugins\generic\reviewReminder;
 use APP\core\Application;
 use APP\plugins\generic\reviewReminder\classes\HookCallbacks;
 use APP\plugins\generic\reviewReminder\classes\mail\mailables\PendingReviewsReminder;
+use APP\plugins\generic\reviewReminder\classes\PendingReviewsReminderSetting;
 use APP\plugins\generic\reviewReminder\classes\ReviewHistory;
-use APP\plugins\generic\reviewReminder\classes\ReviewReminderSettingsForm;
 use APP\plugins\generic\reviewReminder\classes\tasks\SendPendingReviewsReminder;
 use Carbon\Carbon;
 use Carbon\WeekDay;
-use PKP\core\JSONMessage;
-use PKP\linkAction\LinkAction;
-use PKP\linkAction\request\AjaxModal;
 use PKP\plugins\GenericPlugin;
 use PKP\plugins\Hook;
 use PKP\plugins\interfaces\HasTaskScheduler;
@@ -33,7 +30,6 @@ use PKP\scheduledTask\PKPScheduler;
 
 class ReviewReminderPlugin extends GenericPlugin implements HasTaskScheduler
 {
-    public const PENDING_REVIEWS_REMINDER_ENABLED = 'pendingReviewsReminderEnabled';
     public const PENDING_REVIEWS_REMINDER_LAST_SENT_AT = 'pendingReviewsReminderLastSentAt';
 
     public function register($category, $path, $mainContextId = null)
@@ -45,6 +41,10 @@ class ReviewReminderPlugin extends GenericPlugin implements HasTaskScheduler
             Hook::add('Mailable::build', [$hookCallbacks, 'attachCalendarInvite']);
             Hook::add('TemplateManager::fetch', [new ReviewHistory($this), 'addReminders']);
             Hook::add('Mailer::Mailables', [$this, 'addMailables']);
+            $pendingReviewsReminderSetting = new PendingReviewsReminderSetting();
+            Hook::add('Schema::get::before::context', [$pendingReviewsReminderSetting, 'reloadContextSchema']);
+            Hook::add('Schema::get::context', [$pendingReviewsReminderSetting, 'addToContextSchema']);
+            Hook::add('Form::config::before', [$pendingReviewsReminderSetting, 'addToReviewSetupForm']);
         }
         return $success;
     }
@@ -67,15 +67,10 @@ class ReviewReminderPlugin extends GenericPlugin implements HasTaskScheduler
         return __('plugins.generic.reviewReminder.description');
     }
 
-    public function isPendingReviewsReminderEnabled(int $contextId): bool
-    {
-        return (bool) ($this->getSetting($contextId, self::PENDING_REVIEWS_REMINDER_ENABLED) ?? true);
-    }
-
     public function shouldSendPendingReviewsReminder(int $contextId): bool
     {
         return $this->getEnabled($contextId)
-            && $this->isPendingReviewsReminderEnabled($contextId)
+            && PendingReviewsReminderSetting::isEnabled($contextId)
             && $this->isPendingReviewsReminderDue($contextId);
     }
 
@@ -104,46 +99,6 @@ class ReviewReminderPlugin extends GenericPlugin implements HasTaskScheduler
         }
 
         return Carbon::parse($lastSentAt)->lt(Carbon::now()->startOfWeek(WeekDay::Monday));
-    }
-
-    public function getActions($request, $actionArgs)
-    {
-        $router = $request->getRouter();
-        return array_merge(
-            $this->getEnabled() ? [
-                new LinkAction(
-                    'settings',
-                    new AjaxModal(
-                        $router->url($request, null, null, 'manage', null, ['verb' => 'settings', 'plugin' => $this->getName(), 'category' => 'generic']),
-                        $this->getDisplayName()
-                    ),
-                    __('manager.plugins.settings'),
-                    null
-                ),
-            ] : [],
-            parent::getActions($request, $actionArgs)
-        );
-    }
-
-    public function manage($args, $request)
-    {
-        if ($request->getUserVar('verb') !== 'settings') {
-            return parent::manage($args, $request);
-        }
-
-        $form = new ReviewReminderSettingsForm($this, $request->getContext()->getId());
-        if (!$request->getUserVar('save')) {
-            $form->initData();
-            return new JSONMessage(true, $form->fetch($request));
-        }
-
-        $form->readInputData();
-        if (!$form->validate()) {
-            return new JSONMessage(true, $form->fetch($request));
-        }
-
-        $form->execute();
-        return new JSONMessage(true);
     }
 
     public function getInstallEmailTemplatesFile()

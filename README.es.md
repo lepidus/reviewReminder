@@ -13,7 +13,7 @@ Este README describe la versión para **OJS 3.5.0-4 o posterior**. El plugin añ
 | Archivo adjunto de calendario | Invitación de revisión (incluida una ronda posterior) o recordatorio manual enviado por un editor | Un archivo `invite.ics` adjunto al propio correo de OJS |
 | Recordatorio semanal | Una vez por semana, desde el lunes 00:00 | Un correo por revista con las revisiones pendientes |
 
-Ambas funciones se habilitan, por revista, al activar el plugin. El recordatorio semanal puede desactivarse en los **Ajustes** del plugin, en **Sitio web > Plugins > Plugins instalados**, sin afectar el adjunto de calendario. El día y la hora del recordatorio semanal no se pueden cambiar.
+Ambas funciones se habilitan, por revista, al activar el plugin. El recordatorio semanal puede desactivarse en **Flujo de trabajo > Revisión > Configuración**, debajo de los recordatorios para la revisión, sin afectar el adjunto de calendario. La opción aparece mientras el plugin está activado. El día y la hora del recordatorio semanal no se pueden cambiar.
 
 ## Recordatorio semanal
 

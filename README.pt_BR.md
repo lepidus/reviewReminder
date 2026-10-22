@@ -13,7 +13,7 @@ Este README descreve a versão para **OJS 3.5.0-4 ou posterior**. O plugin adici
 | Anexo de calendário | Convite para avaliação (inclusive em rodada posterior) ou lembrete manual enviado pelo editor | O arquivo `invite.ics` anexado ao próprio email do OJS |
 | Lembrete semanal | Uma vez por semana, a partir de segunda-feira 00:00 | Um email por revista com as avaliações pendentes |
 
-Os dois recursos são ativados, por revista, ao ativar o plugin. O lembrete semanal pode ser desligado nas **Configurações** do plugin, em **Website > Plugins > Plugins instalados**, sem afetar o anexo de calendário. O dia e o horário do lembrete semanal não podem ser alterados.
+Os dois recursos são ativados, por revista, ao ativar o plugin. O lembrete semanal pode ser desligado em **Fluxo de Trabalho > Avaliação > Configurar**, abaixo dos lembretes para avaliação, sem afetar o anexo de calendário. A opção aparece enquanto o plugin está ativado. O dia e o horário do lembrete semanal não podem ser alterados.
 
 ## Lembrete semanal
 
