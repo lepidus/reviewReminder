@@ -28,7 +28,6 @@ class HookCallbacksTest extends PKPTestCase
     private const NAMESAKE_REVIEWER_ID = 10;
     private const NEW_ROUND_DUE_DATE = '2027-03-15 00:00:00';
     private const NEW_ROUND_CALENDAR_START = 'DTSTART;VALUE=DATE:20270315';
-    private const PREVIOUS_ROUND_CALENDAR_START = 'DTSTART;VALUE=DATE:20260828';
     private const END_OF_MONTH_DUE_DATE = '2027-02-28 00:00:00';
     private const END_OF_MONTH_CALENDAR_START = 'DTSTART;VALUE=DATE:20270228';
     private const END_OF_MONTH_CALENDAR_END = 'DTEND;VALUE=DATE:20270301';
@@ -375,7 +374,8 @@ class HookCallbacksTest extends PKPTestCase
 
         $this->acceptThroughReviewForm($previousRoundAssignment);
 
-        $this->assertStringContainsString(self::PREVIOUS_ROUND_CALENDAR_START, $this->getCalendarInvite());
+        $previousRoundCalendarStart = 'DTSTART;VALUE=DATE:' . date('Ymd', strtotime($previousRoundAssignment->getDateDue()));
+        $this->assertStringContainsString($previousRoundCalendarStart, $this->getCalendarInvite());
     }
 
     public function testShouldIdentifyCalendarEventByTheAcceptedReview(): void
