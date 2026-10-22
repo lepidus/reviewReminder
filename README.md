@@ -13,7 +13,7 @@ This README describes the version for **OJS 3.4.0.x**. The plugin sends two emai
 | Review reminder | When the reviewer accepts a review request | Review deadline, link to the review, and an `invite.ics` calendar file |
 | Weekly reminder | Mondays, through the Acron plugin | One email per journal listing pending reviews |
 
-Both emails are enabled, per journal, by enabling the plugin. The weekly reminder can be turned off in the plugin's **Settings**, in **Website > Plugins > Installed Plugins**, without affecting the reminder on review acceptance. The weekly reminder's day cannot be changed.
+Both emails are enabled, per journal, by enabling the plugin. The weekly reminder can be turned off in **Workflow > Review > Setup**, at the end of the form, without affecting the reminder on review acceptance. The option is shown while the plugin is enabled. The weekly reminder's day cannot be changed.
 
 Both emails have the journal's primary contact as sender. The reminder on review acceptance is sent in the language the reviewer is using in OJS, and the weekly reminder in the journal's primary language. The journal can edit and translate the weekly reminder in **Workflow > Emails**, template *Pending Reviews Reminder*. The text of the reminder on review acceptance comes from the plugin and cannot be edited. Each sending is recorded in the submission's *Activity Log* and shown in the review's *History*, in a block separate from OJS reminders.
 
