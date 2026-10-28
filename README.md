@@ -2,24 +2,24 @@
 
 Other languages: [Português do Brasil](README.pt_BR.md) · [Español](README.es.md)
 
-[![OJS compatibility](https://img.shields.io/badge/OJS-3.5.0.x-brightgreen)](https://github.com/pkp/ojs/tree/stable-3_5_0)
+[![OJS compatibility](https://img.shields.io/badge/OJS-3.5.0--4%2B-brightgreen)](https://github.com/pkp/ojs/tree/stable-3_5_0)
 [![GitHub release](https://img.shields.io/github/v/release/lepidus/reviewReminder)](https://github.com/lepidus/reviewReminder/releases)
 [![License type](https://img.shields.io/github/license/lepidus/reviewReminder)](https://github.com/lepidus/reviewReminder/blob/main/LICENSE)
 
-This README describes the version for **OJS 3.5.0.x**. The plugin adds two features for reviewers:
+This README describes the version for **OJS 3.5.0-4 or later**. The plugin adds two features for reviewers:
 
 | Feature | When | What the reviewer receives |
 | --- | --- | --- |
 | Calendar attachment | Review invitation (including a subsequent round) or manual reminder sent by an editor | An `invite.ics` file attached to the OJS email itself |
 | Weekly reminder | Once a week, from Monday 00:00 | One email per journal listing pending reviews |
 
-Both features are enabled, per journal, by enabling the plugin. The weekly reminder can be turned off in the plugin's **Settings**, in **Website > Plugins > Installed Plugins**, without affecting the calendar attachment. The weekly reminder's day and time cannot be changed.
+Both features are enabled, per journal, by enabling the plugin. The weekly reminder can be turned off in **Workflow > Review > Setup**, below the reminders for review, without affecting the calendar attachment. The option is shown while the plugin is enabled. The weekly reminder's day and time cannot be changed.
 
 ## Weekly reminder
 
 Example of the email, sent in the journal's primary language with the journal's primary contact as sender:
 
-> **Subject:** Pending Reviews Reminder
+> **Subject:** Pending Reviews Reminder - Example Journal
 >
 > Dear Maria Silva,
 >
@@ -31,7 +31,7 @@ Example of the email, sent in the journal's primary language with the journal's 
 > This is an automated email. If you have already submitted your review for these manuscripts, please disregard this email.
 
 - Each title links to the review page, which asks the reviewer to sign in. The email has no calendar attachment.
-- The email text comes from the plugin and is not listed in the journal's email templates, so it cannot be edited there.
+- The journal can edit and translate the email in **Workflow > Emails**, template *Pending Reviews Reminder*. The `{$submissionsList}` variable holds the list of pending reviews.
 - It lists reviews in the latest round of submissions still active in the editorial workflow, for which the reviewer has been notified and that are not completed, declined, or cancelled. This includes unanswered invitations and overdue reviews.
 - Reviewers without pending reviews and disabled accounts receive no email. Reviewers with pending reviews in several journals receive one email from each journal.
 - Each sending is recorded in the submission's *Activity Log* and shown in the review's *History*, in a block separate from OJS reminders. The review's own reminder date is not changed.
@@ -50,23 +50,15 @@ Without cron, OJS uses its built-in runner (`task_runner` in `config.inc.php`), 
 
 ## Calendar attachment
 
-The `invite.ics` file contains an event titled "Review deadline: <submission title> (<journal name>)", with a link to the review page in its description. It is an all-day event on the **review completion deadline**.
+The `invite.ics` file contains an event titled "Review deadline: <submission title> (<journal name>)", with a link to the review page in its description. It is an all-day event on the **review completion deadline**. The link asks the reviewer to sign in even when **One-click Reviewer Access** is enabled, because calendar events are often synced and shared.
 
-Importing the event is optional and does not accept the invitation. The plugin sets no alarms and does not update the event if the deadline changes. The attachment is not added to OJS automatic overdue reminders.
+Importing the event is optional and does not accept the invitation. The plugin sets no alarms and sends nothing when the deadline changes. All attachments of a review describe the same event, so importing a later one, such as a manual reminder, updates the existing event in calendar apps that support it. The attachment is not added to OJS automatic overdue reminders.
 
 ## Installation
 
-> [!IMPORTANT]
-> The OJS 3.5 version is not yet available in the Plugin Gallery.
+Install **Review Reminder** from the Plugin Gallery in **Website > Plugins**, or download the `.tar.gz` package for OJS 3.5 from the [Releases page](https://github.com/lepidus/reviewReminder/releases) and upload it with **Upload a New Plugin**. Then enable it in each journal that needs it and make sure OJS can send emails and that the scheduler is configured.
 
-1. Download the `.tar.gz` package for OJS 3.5 from the [Releases page](https://github.com/lepidus/reviewReminder/releases).
-2. In **Website > Plugins > Installed Plugins**, use **Upload a New Plugin** to upload the package.
-3. Enable **Review Reminder** in each journal that needs it.
-4. Make sure OJS can send emails and that the scheduler is configured.
-
-Optionally, enable **One-click Reviewer Access** in **Workflow > Review > Setup**. The attachment then uses the same one-click link as the OJS email, so it opens the review without signing in. Links in the weekly reminder always ask the reviewer to sign in.
-
-![How to enable One-click Reviewer Access](https://i.imgur.com/cHjoXsI.gif)
+The plugin requires OJS 3.5.0-4 or later. Earlier 3.5.0 releases lack the hook the plugin uses to attach the calendar invite, so the emails go out without it.
 
 Disabling the plugin in a journal stops adding the attachment to future emails and removes the journal from future weekly reminders. Reviews, deadlines, and already imported events are not changed.
 

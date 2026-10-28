@@ -2,24 +2,24 @@
 
 Outros idiomas: [English](README.md) · [Español](README.es.md)
 
-[![Compatibilidade com OJS](https://img.shields.io/badge/OJS-3.5.0.x-brightgreen)](https://github.com/pkp/ojs/tree/stable-3_5_0)
+[![Compatibilidade com OJS](https://img.shields.io/badge/OJS-3.5.0--4%2B-brightgreen)](https://github.com/pkp/ojs/tree/stable-3_5_0)
 [![Versão no GitHub](https://img.shields.io/github/v/release/lepidus/reviewReminder)](https://github.com/lepidus/reviewReminder/releases)
 [![Licença](https://img.shields.io/github/license/lepidus/reviewReminder)](https://github.com/lepidus/reviewReminder/blob/main/LICENSE)
 
-Este README descreve a versão para **OJS 3.5.0.x**. O plugin adiciona dois recursos para os avaliadores:
+Este README descreve a versão para **OJS 3.5.0-4 ou posterior**. O plugin adiciona dois recursos para os avaliadores:
 
 | Recurso | Quando | O que o avaliador recebe |
 | --- | --- | --- |
 | Anexo de calendário | Convite para avaliação (inclusive em rodada posterior) ou lembrete manual enviado pelo editor | O arquivo `invite.ics` anexado ao próprio email do OJS |
 | Lembrete semanal | Uma vez por semana, a partir de segunda-feira 00:00 | Um email por revista com as avaliações pendentes |
 
-Os dois recursos são ativados, por revista, ao ativar o plugin. O lembrete semanal pode ser desligado nas **Configurações** do plugin, em **Website > Plugins > Plugins instalados**, sem afetar o anexo de calendário. O dia e o horário do lembrete semanal não podem ser alterados.
+Os dois recursos são ativados, por revista, ao ativar o plugin. O lembrete semanal pode ser desligado em **Fluxo de Trabalho > Avaliação > Configurar**, abaixo dos lembretes para avaliação, sem afetar o anexo de calendário. A opção aparece enquanto o plugin está ativado. O dia e o horário do lembrete semanal não podem ser alterados.
 
 ## Lembrete semanal
 
 Exemplo do email, enviado no idioma principal da revista e tendo o contato principal da revista como remetente:
 
-> **Assunto:** Lembrete de Avaliações Pendentes
+> **Assunto:** Lembrete de Avaliações Pendentes - Revista Exemplo
 >
 > Prezado(a) Maria Silva,
 >
@@ -31,7 +31,7 @@ Exemplo do email, enviado no idioma principal da revista e tendo o contato princ
 > Este é um email automático. Caso você já tenha enviado a sua avaliação para estes manuscritos, por favor desconsidere este email.
 
 - Cada título leva à página de avaliação, que pede login ao avaliador. O email não tem anexo de calendário.
-- O texto do email vem do plugin e não aparece nos modelos de email da revista, por isso não pode ser editado ali.
+- A revista pode editar e traduzir o email em **Fluxo de Trabalho > E-mails**, no modelo *Lembrete de Avaliações Pendentes*. A variável `{$submissionsList}` contém a lista de avaliações pendentes.
 - Entram as avaliações da rodada mais recente, em submissões ativas no fluxo editorial, para as quais o avaliador já foi notificado e que não foram concluídas, recusadas ou canceladas. Isso inclui convites ainda sem resposta e avaliações atrasadas.
 - Avaliadores sem pendências e contas desativadas não recebem o email. Quem tem pendências em várias revistas recebe um email de cada revista.
 - Cada envio é registrado no *Histórico de atividades* da submissão e aparece no *Histórico* da avaliação, em um bloco separado dos lembretes do OJS. A data de lembrete da avaliação não é alterada.
@@ -50,23 +50,15 @@ Sem o cron, o OJS usa o executor integrado (`task_runner` em `config.inc.php`), 
 
 ## Anexo de calendário
 
-O arquivo `invite.ics` contém um evento com o título "Prazo de avaliação: <título da submissão> (<nome da revista>)" e, na descrição, o link para a página de avaliação. O evento ocupa o dia inteiro do **prazo de conclusão da avaliação**.
+O arquivo `invite.ics` contém um evento com o título "Prazo de avaliação: <título da submissão> (<nome da revista>)" e, na descrição, o link para a página de avaliação. O evento ocupa o dia inteiro do **prazo de conclusão da avaliação**. O link pede login ao avaliador mesmo com o **Acesso do avaliador com um clique** habilitado, porque eventos de calendário costumam ser sincronizados e compartilhados.
 
-Importar o evento é opcional e não aceita o convite. O plugin não define alarmes nem atualiza o evento se o prazo mudar. O anexo não é adicionado aos lembretes automáticos de atraso do OJS.
+Importar o evento é opcional e não aceita o convite. O plugin não define alarmes e não envia nada quando o prazo muda. Todos os anexos de uma avaliação descrevem o mesmo evento, então importar um anexo posterior, como o de um lembrete manual, atualiza o evento existente nos aplicativos de calendário que oferecem isso. O anexo não é adicionado aos lembretes automáticos de atraso do OJS.
 
 ## Instalação
 
-> [!IMPORTANT]
-> A versão para OJS 3.5 ainda não está na Galeria de Plugins.
+Instale o **Review Reminder** pela Galeria de Plugins em **Website > Plugins**, ou baixe o pacote `.tar.gz` para OJS 3.5 na [página de versões](https://github.com/lepidus/reviewReminder/releases) e envie-o com **Enviar um novo plugin**. Depois, ative-o em cada revista que precisar dele e confirme que o OJS envia emails e que o agendador está configurado.
 
-1. Baixe o pacote `.tar.gz` para OJS 3.5 na [página de versões](https://github.com/lepidus/reviewReminder/releases).
-2. Em **Website > Plugins > Plugins instalados**, use **Enviar um novo plugin** e envie o pacote.
-3. Ative o **Review Reminder** em cada revista que precisar dele.
-4. Confirme que o OJS envia emails e que o agendador está configurado.
-
-Opcionalmente, habilite o **Acesso do avaliador com um clique** em **Fluxo de trabalho > Avaliação > Configuração**. Assim, o anexo usa o mesmo link de um clique do email do OJS e abre a avaliação sem login. Os links do lembrete semanal sempre pedem login ao avaliador.
-
-![Como habilitar o acesso do avaliador com um clique](https://i.imgur.com/cHjoXsI.gif)
+O plugin exige o OJS 3.5.0-4 ou posterior. As versões 3.5.0 anteriores não têm o hook que o plugin usa para anexar o convite de calendário, e os emails saem sem ele.
 
 Ao desativar o plugin em uma revista, os próximos emails deixam de levar o anexo e a revista sai dos próximos lembretes semanais. Avaliações, prazos e eventos já importados não são alterados.
 

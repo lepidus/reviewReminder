@@ -5,7 +5,7 @@ msgid "emails.pendingReviewsReminder.description"
 msgstr "Modelo de e-mail utilizado para notificar avaliadores com uma lista de avaliações pendentes"
 
 msgid "emails.pendingReviewsReminder.subject"
-msgstr "Lembrete de Avaliações Pendentes"
+msgstr "Lembrete de Avaliações Pendentes - {$contextName}"
 
 msgid "emails.pendingReviewsReminder.body"
 msgstr ""

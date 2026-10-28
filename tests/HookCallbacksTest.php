@@ -4,6 +4,7 @@ use APP\core\Application;
 use APP\core\PageRouter;
 use APP\facades\Repo;
 use APP\plugins\generic\reviewReminder\classes\HookCallbacks;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use PKP\core\Dispatcher;
 use PKP\core\Registry;
@@ -32,6 +33,7 @@ class HookCallbacksTest extends PKPTestCase
     private const OVERDUE_CALENDAR_END = 'DTEND;VALUE=DATE:20200111';
     private const INJECTED_CALENDAR_PROPERTY = 'X-INJECTED-PROPERTY:injected';
     private const ONE_CLICK_REVIEW_URL = 'http://localhost/index.php/publicknowledge/invitation/accept?id=1&key=oneClickKey';
+    private const REVIEW_PAGE_PATH = '/reviewer/submission?submissionId=7';
     private const CALENDAR_EVENT_NAME = 'SUMMARY:Review deadline: Developing efficacy beliefs in the classroom (Journal of Public Knowledge)';
 
     private $newReviewRoundId;
@@ -83,6 +85,7 @@ class HookCallbacksTest extends PKPTestCase
         }
 
         Mailable::$viewDataCallback = $this->viewDataCallbackBeforeTest;
+        Carbon::setTestNow();
 
         parent::tearDown();
     }
@@ -189,7 +192,16 @@ class HookCallbacksTest extends PKPTestCase
     private function getCalendarInvite(Mailable $mailable): string
     {
         $this->assertCount(1, $mailable->rawAttachments);
-        return $mailable->rawAttachments[0]['data'];
+        return str_replace("\r\n ", '', $mailable->rawAttachments[0]['data']);
+    }
+
+    private function getCalendarProperty(Mailable $mailable, string $propertyName): string
+    {
+        $calendarLines = explode("\r\n", $this->getCalendarInvite($mailable));
+        $propertyLines = array_values(preg_grep('/^' . $propertyName . ':/', $calendarLines));
+        $this->assertCount(1, $propertyLines);
+
+        return substr($propertyLines[0], strlen($propertyName) + 1);
     }
 
     public function testShouldAttachCalendarInviteWithoutWritingFileToDisk(): void
@@ -238,11 +250,13 @@ class HookCallbacksTest extends PKPTestCase
         $this->assertEmpty($injectedLines);
     }
 
-    public function testShouldLinkCalendarInviteToOneClickReviewerAccessWhenEnabled(): void
+    public function testShouldLinkCalendarInviteToReviewPageInsteadOfOneClickReviewerAccess(): void
     {
         $mailable = $this->sendReviewRequest(Repo::reviewAssignment()->get(self::REVIEW_ASSIGNMENT_ID), self::ONE_CLICK_REVIEW_URL);
 
-        $this->assertStringContainsString(self::ONE_CLICK_REVIEW_URL, $this->getCalendarInvite($mailable));
+        $calendarInvite = $this->getCalendarInvite($mailable);
+        $this->assertStringNotContainsString(self::ONE_CLICK_REVIEW_URL, $calendarInvite);
+        $this->assertStringContainsString(self::REVIEW_PAGE_PATH, $calendarInvite);
     }
 
     public function testShouldNameCalendarEventAfterTheReviewedSubmissionAndJournal(): void
@@ -272,5 +286,32 @@ class HookCallbacksTest extends PKPTestCase
         $calendarLines = explode("\r\n", $this->getCalendarInvite($mailable));
         $this->assertContains(self::OVERDUE_CALENDAR_START, $calendarLines);
         $this->assertContains(self::OVERDUE_CALENDAR_END, $calendarLines);
+    }
+
+    public function testShouldKeepCalendarEventUidAcrossEmailsOfTheSameReview(): void
+    {
+        $firstEmail = $this->sendReviewRequest(Repo::reviewAssignment()->get(self::REVIEW_ASSIGNMENT_ID));
+        $secondEmail = $this->sendReviewRequest(Repo::reviewAssignment()->get(self::REVIEW_ASSIGNMENT_ID));
+
+        $this->assertMatchesRegularExpression('/^review-assignment-' . self::REVIEW_ASSIGNMENT_ID . '@.+$/', $this->getCalendarProperty($firstEmail, 'UID'));
+        $this->assertEquals($this->getCalendarProperty($firstEmail, 'UID'), $this->getCalendarProperty($secondEmail, 'UID'));
+    }
+
+    public function testShouldUseDifferentCalendarEventUidForAnotherReview(): void
+    {
+        $reviewEmail = $this->sendReviewRequest(Repo::reviewAssignment()->get(self::REVIEW_ASSIGNMENT_ID));
+        $anotherReviewEmail = $this->sendReviewRequest(Repo::reviewAssignment()->get(self::NAMESAKE_REVIEW_ASSIGNMENT_ID));
+
+        $this->assertNotEquals($this->getCalendarProperty($reviewEmail, 'UID'), $this->getCalendarProperty($anotherReviewEmail, 'UID'));
+    }
+
+    public function testShouldIncreaseCalendarEventSequenceOnEachEmail(): void
+    {
+        Carbon::setTestNow('2026-10-21 10:00:00');
+        $firstEmail = $this->sendReviewRequest(Repo::reviewAssignment()->get(self::REVIEW_ASSIGNMENT_ID));
+        Carbon::setTestNow('2026-10-28 10:00:00');
+        $laterEmail = $this->sendReviewRequest(Repo::reviewAssignment()->get(self::REVIEW_ASSIGNMENT_ID));
+
+        $this->assertGreaterThan((int) $this->getCalendarProperty($firstEmail, 'SEQUENCE'), (int) $this->getCalendarProperty($laterEmail, 'SEQUENCE'));
     }
 }

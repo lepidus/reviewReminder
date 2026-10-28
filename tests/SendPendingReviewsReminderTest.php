@@ -1,5 +1,7 @@
 <?php
 
+use APP\core\Application;
+use APP\core\PageRouter;
 use APP\plugins\generic\reviewReminder\classes\mail\mailables\PendingReviewsReminder;
 use APP\plugins\generic\reviewReminder\classes\tasks\SendPendingReviewsReminder;
 use APP\plugins\generic\reviewReminder\ReviewReminderPlugin;
@@ -7,7 +9,9 @@ use APP\facades\Repo;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use PKP\core\Dispatcher;
 use PKP\core\PKPApplication;
+use PKP\core\Registry;
 use PKP\db\DAORegistry;
 use PKP\facades\Locale;
 use PKP\log\event\PKPSubmissionEventLogEntry;
@@ -43,6 +47,7 @@ class SendPendingReviewsReminderTest extends PKPTestCase
     private const PREVIOUS_MONDAY_MIDNIGHT = '2026-10-12 00:00:00';
     private const MONDAY_MIDNIGHT = '2026-10-19 00:00:00';
     private const WEDNESDAY_AFTERNOON = '2026-10-21 15:00:00';
+    private const FIRST_CONTEXT_REMINDER_SUBJECT = 'Pending Reviews Reminder - Journal of Public Knowledge';
 
     private $pluginSettingsDao;
     private $secondContextId;
@@ -55,12 +60,18 @@ class SendPendingReviewsReminderTest extends PKPTestCase
     private $lastSentSettingBeforeTest;
     private $mailManagerBeforeTest;
 
+    protected function getMockedRegistryKeys(): array
+    {
+        return ['request'];
+    }
+
     protected function setUp(): void
     {
         parent::setUp();
+        $this->createRoutedRequest();
         $this->pluginSettingsDao = DAORegistry::getDAO('PluginSettingsDAO');
         $this->enabledSettingBeforeTest = $this->getPluginSetting(self::FIRST_CONTEXT_ID, 'enabled');
-        $this->weeklyReminderSettingBeforeTest = $this->getPluginSetting(self::FIRST_CONTEXT_ID, self::WEEKLY_REMINDER_SETTING);
+        $this->weeklyReminderSettingBeforeTest = $this->getWeeklyReminderJournalSetting(self::FIRST_CONTEXT_ID)->first();
         $this->lastSentSettingBeforeTest = $this->getPluginSetting(self::FIRST_CONTEXT_ID, self::LAST_SENT_SETTING);
         $this->pluginSettingsDao->deleteSetting(self::FIRST_CONTEXT_ID, self::PLUGIN_NAME, self::LAST_SENT_SETTING);
         Carbon::setTestNow(self::MONDAY_MIDNIGHT);
@@ -73,7 +84,10 @@ class SendPendingReviewsReminderTest extends PKPTestCase
     protected function tearDown(): void
     {
         $this->restorePluginSetting(self::FIRST_CONTEXT_ID, 'enabled', $this->enabledSettingBeforeTest);
-        $this->restorePluginSetting(self::FIRST_CONTEXT_ID, self::WEEKLY_REMINDER_SETTING, $this->weeklyReminderSettingBeforeTest);
+        $this->getWeeklyReminderJournalSetting(self::FIRST_CONTEXT_ID)->delete();
+        if ($this->weeklyReminderSettingBeforeTest) {
+            DB::table('journal_settings')->insert((array) $this->weeklyReminderSettingBeforeTest);
+        }
         $this->restorePluginSetting(self::FIRST_CONTEXT_ID, self::LAST_SENT_SETTING, $this->lastSentSettingBeforeTest);
         Carbon::setTestNow();
         Mail::swap($this->mailManagerBeforeTest);
@@ -99,6 +113,26 @@ class SendPendingReviewsReminderTest extends PKPTestCase
         DB::table('event_log')->whereIn('log_id', $createdEventLogIds)->delete();
 
         parent::tearDown();
+    }
+
+    private function failMailTransport(): void
+    {
+        $mailer = $this->mailManagerBeforeTest->mailer();
+        Mail::shouldReceive('compileParams')->andReturnUsing(fn (...$args) => $mailer->compileParams(...$args));
+        Mail::shouldReceive('send')->andThrow(new TransportException('Connection refused'));
+    }
+
+    private function createRoutedRequest(): void
+    {
+        Registry::delete('request');
+        $_SERVER['PATH_INFO'] = 'index/index';
+        $application = Application::get();
+        $router = new PageRouter();
+        $router->setApplication($application);
+        $dispatcher = new Dispatcher();
+        $dispatcher->setApplication($application);
+        $router->setDispatcher($dispatcher);
+        $application->getRequest()->setRouter($router);
     }
 
     private function getPluginSetting(int $contextId, string $settingName): ?object
@@ -136,14 +170,26 @@ class SendPendingReviewsReminderTest extends PKPTestCase
         $this->pluginSettingsDao->updateSetting($contextId, self::PLUGIN_NAME, self::LAST_SENT_SETTING, $dateTime, 'string');
     }
 
+    private function getWeeklyReminderJournalSetting(int $contextId)
+    {
+        return DB::table('journal_settings')
+            ->where('journal_id', $contextId)
+            ->where('setting_name', self::WEEKLY_REMINDER_SETTING);
+    }
+
     private function setWeeklyReminderEnabled(int $contextId, ?bool $isEnabled): void
     {
+        $this->getWeeklyReminderJournalSetting($contextId)->delete();
         if ($isEnabled === null) {
-            $this->pluginSettingsDao->deleteSetting($contextId, self::PLUGIN_NAME, self::WEEKLY_REMINDER_SETTING);
             return;
         }
 
-        $this->pluginSettingsDao->updateSetting($contextId, self::PLUGIN_NAME, self::WEEKLY_REMINDER_SETTING, $isEnabled, 'bool');
+        DB::table('journal_settings')->insert([
+            'journal_id' => $contextId,
+            'locale' => '',
+            'setting_name' => self::WEEKLY_REMINDER_SETTING,
+            'setting_value' => $isEnabled ? '1' : '0',
+        ]);
     }
 
     private function createSecondContextWithSharedReviewer(): void
@@ -298,7 +344,7 @@ class SendPendingReviewsReminderTest extends PKPTestCase
     public function testShouldNotRetryTheWeeklyReminderInTheSameWeekAfterSendingFails(): void
     {
         $this->enablePlugin(self::FIRST_CONTEXT_ID);
-        Mail::shouldReceive('send')->andThrow(new TransportException('Connection refused'));
+        $this->failMailTransport();
 
         try {
             $this->runTask();
@@ -459,7 +505,7 @@ class SendPendingReviewsReminderTest extends PKPTestCase
     public function testShouldNotRecordReminderWhenEmailIsNotSent(): void
     {
         $this->enablePlugin(self::FIRST_CONTEXT_ID);
-        Mail::shouldReceive('send')->andThrow(new TransportException('Connection refused'));
+        $this->failMailTransport();
 
         try {
             $this->runTask();
@@ -467,5 +513,15 @@ class SendPendingReviewsReminderTest extends PKPTestCase
         }
 
         $this->assertEmpty($this->getRecordedReminders());
+    }
+
+    public function testShouldNameTheJournalInTheWeeklyReminderSubject(): void
+    {
+        $this->enablePlugin(self::FIRST_CONTEXT_ID);
+
+        $this->runTask();
+
+        $email = Mail::sent(PendingReviewsReminder::class)->first();
+        $this->assertEquals(self::FIRST_CONTEXT_REMINDER_SUBJECT, app('mailer')->compileParams($email->subject, $email->viewData));
     }
 }

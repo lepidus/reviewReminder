@@ -58,7 +58,8 @@ class ReviewHistoryTest extends PKPTestCase
         $this->pluginSettingsDao->updateSetting(self::CONTEXT_ID, self::PLUGIN_NAME, 'enabled', true, 'bool');
         $this->lastEventLogIdBeforeTest = DB::table('event_log')->max('log_id');
 
-        $this->fetchHooksBeforeTest = Hook::getHooks('TemplateManager::fetch');
+        $hooks = &Hook::getHooks();
+        $this->fetchHooksBeforeTest = $hooks['TemplateManager::fetch'] ?? null;
         $request = $this->createReviewHistoryRequest();
         $this->reviewAssignmentId = $this->createReviewAssignment();
         $this->otherReviewAssignmentId = $this->createReviewAssignment();
@@ -76,8 +77,7 @@ class ReviewHistoryTest extends PKPTestCase
         DB::table('review_assignments')->whereIn('review_id', [$this->reviewAssignmentId, $this->otherReviewAssignmentId])->delete();
 
         $this->restoreEnabledSetting();
-        $hooks = &Hook::getHooks();
-        $hooks['TemplateManager::fetch'] = $this->fetchHooksBeforeTest;
+        $this->setFetchHooks($this->fetchHooksBeforeTest);
 
         parent::tearDown();
     }
@@ -170,16 +170,25 @@ class ReviewHistoryTest extends PKPTestCase
         return $this->templateManager->fetch(self::CORE_REVIEW_HISTORY_TEMPLATE);
     }
 
+    private function setFetchHooks(?array $fetchHooks): void
+    {
+        $hooks = &Hook::getHooks();
+        unset($hooks['TemplateManager::fetch']);
+        if ($fetchHooks !== null) {
+            $hooks['TemplateManager::fetch'] = $fetchHooks;
+        }
+    }
+
     private function renderCoreReviewHistory(): string
     {
         $hooks = &Hook::getHooks();
-        $pluginFetchHooks = $hooks['TemplateManager::fetch'];
-        $hooks['TemplateManager::fetch'] = $this->fetchHooksBeforeTest;
+        $pluginFetchHooks = $hooks['TemplateManager::fetch'] ?? null;
+        $this->setFetchHooks($this->fetchHooksBeforeTest);
 
         try {
             return $this->renderReviewHistory();
         } finally {
-            $hooks['TemplateManager::fetch'] = $pluginFetchHooks;
+            $this->setFetchHooks($pluginFetchHooks);
         }
     }
 
