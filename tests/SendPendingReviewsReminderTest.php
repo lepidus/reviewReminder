@@ -1,14 +1,20 @@
 <?php
 
+use APP\core\Application;
+use APP\core\PageRouter;
 use APP\plugins\generic\reviewReminder\classes\mail\mailables\PendingReviewsReminder;
 use APP\plugins\generic\reviewReminder\classes\tasks\SendPendingReviewsReminder;
 use APP\facades\Repo;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Testing\Fakes\MailFake;
 use PKP\core\PKPApplication;
+use PKP\core\Dispatcher;
+use PKP\core\Registry;
 use PKP\db\DAORegistry;
 use PKP\facades\Locale;
 use PKP\log\event\PKPSubmissionEventLogEntry;
+use PKP\mail\Mailer;
 use PKP\security\Role;
 use PKP\submission\PKPSubmission;
 use PKP\tests\PKPTestCase;
@@ -18,6 +24,7 @@ class SendPendingReviewsReminderTest extends PKPTestCase
 {
     private const PLUGIN_NAME = 'reviewreminderplugin';
     private const FIRST_CONTEXT_ID = 1;
+    private const FIRST_CONTEXT_REMINDER_SUBJECT = 'Pending Reviews Reminder - Journal of Public Knowledge';
     private const FIRST_CONTEXT_REVIEWERS = [
         'jjanssen@mailinator.com',
         'phudson@mailinator.com',
@@ -41,21 +48,35 @@ class SendPendingReviewsReminderTest extends PKPTestCase
     private $enabledSettingBeforeTest;
     private $weeklyReminderSettingBeforeTest;
 
+    protected function getMockedRegistryKeys(): array
+    {
+        return ['request'];
+    }
+
     protected function setUp(): void
     {
         parent::setUp();
+        $this->createRoutedRequest();
         $this->pluginSettingsDao = DAORegistry::getDAO('PluginSettingsDAO');
         $this->enabledSettingBeforeTest = $this->getPluginSetting(self::FIRST_CONTEXT_ID, 'enabled');
-        $this->weeklyReminderSettingBeforeTest = $this->getPluginSetting(self::FIRST_CONTEXT_ID, self::WEEKLY_REMINDER_SETTING);
+        $this->weeklyReminderSettingBeforeTest = $this->getWeeklyReminderJournalSetting(self::FIRST_CONTEXT_ID)->first();
         $this->lastEventLogIdBeforeTest = DB::table('event_log')->max('log_id');
         Locale::registerPath('plugins/generic/reviewReminder/locale');
-        Mail::fake();
+        Mail::swap(new class () extends MailFake {
+            public function compileParams(string $view, array $data): string
+            {
+                return (new ReflectionClass(Mailer::class))->newInstanceWithoutConstructor()->compileParams($view, $data);
+            }
+        });
     }
 
     protected function tearDown(): void
     {
         $this->restorePluginSetting(self::FIRST_CONTEXT_ID, 'enabled', $this->enabledSettingBeforeTest);
-        $this->restorePluginSetting(self::FIRST_CONTEXT_ID, self::WEEKLY_REMINDER_SETTING, $this->weeklyReminderSettingBeforeTest);
+        $this->getWeeklyReminderJournalSetting(self::FIRST_CONTEXT_ID)->delete();
+        if ($this->weeklyReminderSettingBeforeTest) {
+            DB::table('journal_settings')->insert((array) $this->weeklyReminderSettingBeforeTest);
+        }
 
         if ($this->secondContextId) {
             $this->pluginSettingsDao->deleteSetting($this->secondContextId, self::PLUGIN_NAME, 'enabled');
@@ -109,14 +130,26 @@ class SendPendingReviewsReminderTest extends PKPTestCase
         $this->pluginSettingsDao->updateSetting($contextId, self::PLUGIN_NAME, 'enabled', false, 'bool');
     }
 
+    private function getWeeklyReminderJournalSetting(int $contextId)
+    {
+        return DB::table('journal_settings')
+            ->where('journal_id', $contextId)
+            ->where('setting_name', self::WEEKLY_REMINDER_SETTING);
+    }
+
     private function setWeeklyReminderEnabled(int $contextId, ?bool $isEnabled): void
     {
+        $this->getWeeklyReminderJournalSetting($contextId)->delete();
         if ($isEnabled === null) {
-            $this->pluginSettingsDao->deleteSetting($contextId, self::PLUGIN_NAME, self::WEEKLY_REMINDER_SETTING);
             return;
         }
 
-        $this->pluginSettingsDao->updateSetting($contextId, self::PLUGIN_NAME, self::WEEKLY_REMINDER_SETTING, $isEnabled, 'bool');
+        DB::table('journal_settings')->insert([
+            'journal_id' => $contextId,
+            'locale' => '',
+            'setting_name' => self::WEEKLY_REMINDER_SETTING,
+            'setting_value' => $isEnabled ? '1' : '0',
+        ]);
     }
 
     private function createSecondContextWithSharedReviewer(): void
@@ -162,6 +195,26 @@ class SendPendingReviewsReminderTest extends PKPTestCase
             'round' => $currentRound->round + 1,
             'status' => $currentRound->status,
         ], 'review_round_id');
+    }
+
+    private function createRoutedRequest(): void
+    {
+        Registry::delete('request');
+        $_SERVER['PATH_INFO'] = 'index/index';
+        $application = Application::get();
+        $router = new PageRouter();
+        $router->setApplication($application);
+        $dispatcher = new Dispatcher();
+        $dispatcher->setApplication($application);
+        $router->setDispatcher($dispatcher);
+        $application->getRequest()->setRouter($router);
+    }
+
+    private function failMailTransport(): void
+    {
+        $mailer = (new ReflectionClass(Mailer::class))->newInstanceWithoutConstructor();
+        Mail::shouldReceive('compileParams')->andReturnUsing(fn (...$args) => $mailer->compileParams(...$args));
+        Mail::shouldReceive('send')->andThrow(new TransportException('Connection refused'));
     }
 
     private function runTask(): void
@@ -381,7 +434,7 @@ class SendPendingReviewsReminderTest extends PKPTestCase
     public function testShouldNotRecordReminderWhenEmailIsNotSent(): void
     {
         $this->enablePlugin(self::FIRST_CONTEXT_ID);
-        Mail::shouldReceive('send')->andThrow(new TransportException('Connection refused'));
+        $this->failMailTransport();
 
         try {
             $this->runTask();
@@ -389,5 +442,15 @@ class SendPendingReviewsReminderTest extends PKPTestCase
         }
 
         $this->assertEmpty($this->getRecordedReminders());
+    }
+
+    public function testShouldNameTheJournalInTheWeeklyReminderSubject(): void
+    {
+        $this->enablePlugin(self::FIRST_CONTEXT_ID);
+
+        $this->runTask();
+
+        $email = Mail::sent(PendingReviewsReminder::class)->first();
+        $this->assertEquals(self::FIRST_CONTEXT_REMINDER_SUBJECT, Mail::compileParams($email->subject, $email->viewData));
     }
 }

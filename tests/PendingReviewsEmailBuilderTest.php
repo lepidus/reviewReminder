@@ -8,6 +8,9 @@ use APP\submission\Submission;
 use APP\publication\Publication;
 use APP\plugins\generic\reviewReminder\classes\PendingReviewsEmailBuilder;
 use APP\plugins\generic\reviewReminder\ReviewReminderPlugin;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Testing\Fakes\MailFake;
+use PKP\mail\Mailer;
 
 class PendingReviewsEmailBuilderTest extends TestCase
 {
@@ -29,6 +32,12 @@ class PendingReviewsEmailBuilderTest extends TestCase
             $this->locale
         );
         $this->initializePluginLocaleData();
+        Mail::swap(new class () extends MailFake {
+            public function compileParams(string $view, array $data): string
+            {
+                return (new ReflectionClass(Mailer::class))->newInstanceWithoutConstructor()->compileParams($view, $data);
+            }
+        });
     }
 
     private function initializePluginLocaleData(): void

@@ -5,6 +5,7 @@ use APP\core\PageRouter;
 use APP\facades\Repo;
 use APP\plugins\generic\reviewReminder\classes\HookCallbacks;
 use APP\plugins\generic\reviewReminder\classes\mail\mailables\ReviewReminder;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use PKP\core\Dispatcher;
@@ -16,6 +17,7 @@ use PKP\facades\Locale;
 use PKP\log\event\PKPSubmissionEventLogEntry;
 use PKP\submission\reviewAssignment\ReviewAssignment;
 use PKP\submission\reviewer\ReviewerAction;
+use PKP\submission\reviewer\form\PKPReviewerReviewStep1Form;
 use PKP\tests\PKPTestCase;
 
 class HookCallbacksTest extends PKPTestCase
@@ -33,6 +35,9 @@ class HookCallbacksTest extends PKPTestCase
     private const OVERDUE_CALENDAR_START = 'DTSTART;VALUE=DATE:20200110';
     private const OVERDUE_CALENDAR_END = 'DTEND;VALUE=DATE:20200111';
     private const INJECTED_CALENDAR_PROPERTY = 'X-INJECTED-PROPERTY:injected';
+    private const CONTEXT_ID = 1;
+    private const ONE_CLICK_ACCESS_SETTING = 'reviewerAccessKeysEnabled';
+    private const REVIEW_PAGE_PATH = '/reviewer/submission?submissionId=7';
     private const CALENDAR_EVENT_NAME = 'SUMMARY:Review deadline: Developing efficacy beliefs in the classroom (Journal of Public Knowledge)';
 
     private $reviewAssignmentDao;
@@ -42,6 +47,8 @@ class HookCallbacksTest extends PKPTestCase
     private $confirmedReviewAssignmentIds = [];
     private $originalSubmissionTitle;
     private $lastEventLogIdBeforeTest;
+    private $oneClickAccessSettingBeforeTest;
+    private $customizedTemplateId;
 
     protected function getMockedRegistryKeys(): array
     {
@@ -54,12 +61,22 @@ class HookCallbacksTest extends PKPTestCase
         $this->reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
         Locale::registerPath('plugins/generic/reviewReminder/locale');
         $this->lastEventLogIdBeforeTest = DB::table('event_log')->max('log_id');
+        $this->oneClickAccessSettingBeforeTest = DB::table('journal_settings')
+            ->where('journal_id', self::CONTEXT_ID)
+            ->where('setting_name', self::ONE_CLICK_ACCESS_SETTING)
+            ->value('setting_value');
         Mail::fake();
     }
 
     protected function tearDown(): void
     {
         DB::table('access_keys')->whereIn('assoc_id', $this->confirmedReviewAssignmentIds)->delete();
+        if ($this->customizedTemplateId) {
+            DB::table('email_templates_settings')->where('email_id', $this->customizedTemplateId)->delete();
+            DB::table('email_templates')->where('email_id', $this->customizedTemplateId)->delete();
+        }
+        $this->setOneClickReviewerAccess($this->oneClickAccessSettingBeforeTest);
+        Carbon::setTestNow();
 
         $createdEventLogIds = DB::table('event_log')->where('log_id', '>', $this->lastEventLogIdBeforeTest)->pluck('log_id');
         DB::table('event_log_settings')->whereIn('log_id', $createdEventLogIds)->delete();
@@ -103,6 +120,22 @@ class HookCallbacksTest extends PKPTestCase
         $request->setRouter($router);
 
         return $request;
+    }
+
+    private function setOneClickReviewerAccess(?string $value): void
+    {
+        DB::table('journal_settings')
+            ->where('journal_id', self::CONTEXT_ID)
+            ->where('setting_name', self::ONE_CLICK_ACCESS_SETTING)
+            ->delete();
+        if ($value !== null) {
+            DB::table('journal_settings')->insert([
+                'journal_id' => self::CONTEXT_ID,
+                'locale' => '',
+                'setting_name' => self::ONE_CLICK_ACCESS_SETTING,
+                'setting_value' => $value,
+            ]);
+        }
     }
 
     private function getCurrentReviewAssignment(int $reviewerId): ReviewAssignment
@@ -168,14 +201,49 @@ class HookCallbacksTest extends PKPTestCase
         $this->updateSubmissionTitle("Injected title\r\n" . self::INJECTED_CALENDAR_PROPERTY);
     }
 
-    private function confirmReview(ReviewAssignment $reviewAssignment): void
+    private function confirmReview(ReviewAssignment $reviewAssignment, ?HookCallbacks $hookCallbacks = null): void
     {
         $this->confirmedReviewAssignmentIds[] = $reviewAssignment->getId();
         $submission = Repo::submission()->get(self::SUBMISSION_ID);
         $mailable = (new ReviewerAction())->getResponseEmail($submission, $reviewAssignment, false, null);
         $request = $this->createContextRequest();
 
-        (new HookCallbacks())->sendReviewReminder('ReviewerAction::confirmReview', [$request, $submission, $mailable, false]);
+        ($hookCallbacks ?? new HookCallbacks())->sendReviewReminder('ReviewerAction::confirmReview', [$request, $submission, $mailable, false]);
+    }
+
+    private function acceptThroughReviewForm(ReviewAssignment $reviewAssignment): void
+    {
+        $hookCallbacks = new HookCallbacks();
+        $reviewForm = new PKPReviewerReviewStep1Form($this->createContextRequest(), Repo::submission()->get(self::SUBMISSION_ID), $reviewAssignment);
+        $formVariables = [];
+        $hookCallbacks->rememberReviewBeingAccepted('pkpreviewerreviewstep1form::readuservars', [$reviewForm, &$formVariables]);
+
+        $this->confirmReview($reviewAssignment, $hookCallbacks);
+    }
+
+    private function getCalendarInvite(): string
+    {
+        return str_replace("\r\n ", '', $this->getSentReminder()->rawAttachments[0]['data']);
+    }
+
+    private function getCalendarProperty(string $propertyName): string
+    {
+        $propertyLines = array_values(preg_grep('/^' . $propertyName . ':/', explode("\r\n", $this->getCalendarInvite())));
+        $this->assertCount(1, $propertyLines);
+
+        return substr($propertyLines[0], strlen($propertyName) + 1);
+    }
+
+    private function customizeAcceptanceReminderTemplate(string $subject, string $body): void
+    {
+        $this->customizedTemplateId = DB::table('email_templates')->insertGetId([
+            'email_key' => 'REVIEW_REMINDER',
+            'context_id' => self::CONTEXT_ID,
+        ], 'email_id');
+        DB::table('email_templates_settings')->insert([
+            ['email_id' => $this->customizedTemplateId, 'locale' => 'en', 'setting_name' => 'subject', 'setting_value' => $subject],
+            ['email_id' => $this->customizedTemplateId, 'locale' => 'en', 'setting_name' => 'body', 'setting_value' => $body],
+        ]);
     }
 
     private function getSentReminder(): ReviewReminder
@@ -191,8 +259,7 @@ class HookCallbacksTest extends PKPTestCase
 
         $this->confirmReview($newRoundAssignment);
 
-        $calendarInvite = $this->getSentReminder()->rawAttachments[0];
-        $this->assertStringContainsString(self::NEW_ROUND_CALENDAR_START, $calendarInvite['data']);
+        $this->assertStringContainsString(self::NEW_ROUND_CALENDAR_START, $this->getCalendarInvite());
     }
 
     public function testShouldRemindReviewerWhoAcceptedWhenAnotherReviewerHasTheSameName(): void
@@ -223,7 +290,7 @@ class HookCallbacksTest extends PKPTestCase
 
         $this->confirmReview($this->getCurrentReviewAssignment(self::REVIEWER_ID));
 
-        $calendarLines = explode("\r\n", $this->getSentReminder()->rawAttachments[0]['data']);
+        $calendarLines = explode("\r\n", $this->getCalendarInvite());
         $injectedLines = array_filter(
             $calendarLines,
             fn (string $line) => str_starts_with($line, self::INJECTED_CALENDAR_PROPERTY)
@@ -275,14 +342,14 @@ class HookCallbacksTest extends PKPTestCase
     {
         $this->confirmReview($this->getCurrentReviewAssignment(self::REVIEWER_ID));
 
-        $this->assertContains(self::CALENDAR_EVENT_NAME, explode("\r\n", $this->getSentReminder()->rawAttachments[0]['data']));
+        $this->assertContains(self::CALENDAR_EVENT_NAME, explode("\r\n", $this->getCalendarInvite()));
     }
 
     public function testShouldPlaceCalendarEventOnTheReviewDueDateOnly(): void
     {
         $this->confirmReview($this->assignReviewerToNewReviewRound(self::REVIEWER_ID, self::END_OF_MONTH_DUE_DATE));
 
-        $calendarLines = explode("\r\n", $this->getSentReminder()->rawAttachments[0]['data']);
+        $calendarLines = explode("\r\n", $this->getCalendarInvite());
         $this->assertContains(self::END_OF_MONTH_CALENDAR_START, $calendarLines);
         $this->assertContains(self::END_OF_MONTH_CALENDAR_END, $calendarLines);
     }
@@ -291,8 +358,69 @@ class HookCallbacksTest extends PKPTestCase
     {
         $this->confirmReview($this->assignReviewerToNewReviewRound(self::REVIEWER_ID, self::OVERDUE_DUE_DATE));
 
-        $calendarLines = explode("\r\n", $this->getSentReminder()->rawAttachments[0]['data']);
+        $calendarLines = explode("\r\n", $this->getCalendarInvite());
         $this->assertContains(self::OVERDUE_CALENDAR_START, $calendarLines);
         $this->assertContains(self::OVERDUE_CALENDAR_END, $calendarLines);
+    }
+
+    public function testShouldNotCreateAccessKeyOnReviewAcceptanceWhenOneClickReviewerAccessIsEnabled(): void
+    {
+        $this->setOneClickReviewerAccess('1');
+        $reviewAssignment = $this->getCurrentReviewAssignment(self::REVIEWER_ID);
+
+        $this->confirmReview($reviewAssignment);
+
+        $this->assertFalse(DB::table('access_keys')->where('assoc_id', $reviewAssignment->getId())->exists());
+    }
+
+    public function testShouldLinkCalendarInviteToReviewPageWhenOneClickReviewerAccessIsEnabled(): void
+    {
+        $this->setOneClickReviewerAccess('1');
+
+        $this->confirmReview($this->getCurrentReviewAssignment(self::REVIEWER_ID));
+
+        $calendarInvite = $this->getCalendarInvite();
+        $this->assertStringContainsString(self::REVIEW_PAGE_PATH, $calendarInvite);
+        $this->assertStringNotContainsString('key=', $calendarInvite);
+    }
+
+    public function testShouldRemindDueDateOfPreviousRoundAcceptedAfterReviewerIsAssignedToANewRound(): void
+    {
+        $previousRoundAssignment = $this->getCurrentReviewAssignment(self::REVIEWER_ID);
+        $this->assignReviewerToNewReviewRound(self::REVIEWER_ID);
+
+        $this->acceptThroughReviewForm($previousRoundAssignment);
+
+        $previousRoundCalendarStart = 'DTSTART;VALUE=DATE:' . date('Ymd', strtotime($previousRoundAssignment->getDateDue()));
+        $this->assertStringContainsString($previousRoundCalendarStart, $this->getCalendarInvite());
+    }
+
+    public function testShouldIdentifyCalendarEventByTheAcceptedReview(): void
+    {
+        $reviewAssignment = $this->getCurrentReviewAssignment(self::REVIEWER_ID);
+
+        $this->confirmReview($reviewAssignment);
+
+        $this->assertMatchesRegularExpression('/^review-assignment-' . $reviewAssignment->getId() . '@.+$/', $this->getCalendarProperty('UID'));
+    }
+
+    public function testShouldNumberCalendarEventSequenceByTheSendingTime(): void
+    {
+        Carbon::setTestNow('2026-10-21 10:00:00');
+
+        $this->confirmReview($this->getCurrentReviewAssignment(self::REVIEWER_ID));
+
+        $this->assertEquals(Carbon::now()->getTimestamp(), (int) $this->getCalendarProperty('SEQUENCE'));
+    }
+
+    public function testShouldSendAcceptanceReminderWithTheTemplateCustomizedByTheJournal(): void
+    {
+        $this->customizeAcceptanceReminderTemplate('Customized acceptance reminder', 'Customized body for {$reviewerName}');
+
+        $this->confirmReview($this->getCurrentReviewAssignment(self::REVIEWER_ID));
+
+        $reminder = $this->getSentReminder();
+        $this->assertEquals('Customized acceptance reminder', $reminder->subject);
+        $this->assertEquals('Customized body for {$reviewerName}', $reminder->view);
     }
 }

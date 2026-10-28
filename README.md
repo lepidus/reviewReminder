@@ -13,9 +13,9 @@ This README describes the version for **OJS 3.4.0.x**. The plugin sends two emai
 | Review reminder | When the reviewer accepts a review request | Review deadline, link to the review, and an `invite.ics` calendar file |
 | Weekly reminder | Mondays, through the Acron plugin | One email per journal listing pending reviews |
 
-Both emails are enabled, per journal, by enabling the plugin. The weekly reminder can be turned off in the plugin's **Settings**, in **Website > Plugins > Installed Plugins**, without affecting the reminder on review acceptance. The weekly reminder's day cannot be changed.
+Both emails are enabled, per journal, by enabling the plugin. The weekly reminder can be turned off in **Workflow > Review > Setup**, at the end of the form, without affecting the reminder on review acceptance. The option is shown while the plugin is enabled. The weekly reminder's day cannot be changed.
 
-Both emails have the journal's primary contact as sender. The reminder on review acceptance is sent in the language the reviewer is using in OJS, and the weekly reminder in the journal's primary language. Their texts come from the plugin and are not listed in the journal's email templates, so they cannot be edited there. Each sending is recorded in the submission's *Activity Log* and shown in the review's *History*, in a block separate from OJS reminders.
+Both emails have the journal's primary contact as sender. The reminder on review acceptance is sent in the language the reviewer is using in OJS, and the weekly reminder in the journal's primary language. The journal can edit and translate both emails in **Workflow > Emails**, templates *Review Acceptance Reminder* and *Pending Reviews Reminder*. Each sending is recorded in the submission's *Activity Log* and shown in the review's *History*, in a block separate from OJS reminders.
 
 ## Review reminder
 
@@ -31,13 +31,13 @@ Example of the email sent when the reviewer accepts the request:
 >
 > You can also use the attached reminder to add this event to your preferred calendar.
 
-The `invite.ics` file contains an event titled "Review deadline: <submission title> (<journal name>)", which takes the whole day of the **review completion deadline**. The event description links to the review. When **One-click Reviewer Access** is enabled, that link opens the review without signing in. The plugin sets no alarms and does not update the event if the deadline changes.
+The `invite.ics` file contains an event titled "Review deadline: <submission title> (<journal name>)", which takes the whole day of the **review completion deadline**. The event description links to the review. The link asks the reviewer to sign in even when **One-click Reviewer Access** is enabled, because calendar events are often synced and shared. The plugin sets no alarms and does not update the event if the deadline changes.
 
 ## Weekly reminder
 
 Example of the weekly email:
 
-> **Subject:** Pending Reviews Reminder
+> **Subject:** Pending Reviews Reminder - Example Journal
 >
 > Dear Maria Silva,
 >
@@ -67,10 +67,6 @@ If the server runs scheduled tasks through cron instead of Acron, add the plugin
 ## Installation
 
 Install **Review Reminder** from the Plugin Gallery in **Website > Plugins**, or download the `.tar.gz` package for OJS 3.4 from the [Releases page](https://github.com/lepidus/reviewReminder/releases) and upload it with **Upload a New Plugin**. Then enable it in each journal that needs it and make sure OJS can send emails.
-
-Optionally, enable **One-click Reviewer Access** in **Workflow > Review > Setup**.
-
-![How to enable One-click Reviewer Access](https://i.imgur.com/cHjoXsI.gif)
 
 Disabling the plugin in a journal stops both emails for that journal. Reviews, deadlines, and already imported events are not changed.
 

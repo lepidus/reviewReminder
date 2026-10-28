@@ -1,8 +1,8 @@
 msgid "emails.reviewReminder.name"
-msgstr "Recordatorio de Revisión"
+msgstr "Recordatorio de Aceptación de la Revisión"
 
 msgid "emails.reviewReminder.description"
-msgstr "Modelo de correo electrónico utilizado para notificar a los revisores sobre sus asignaciones de revisión"
+msgstr "Enviado por el plugin Review Reminder al revisor que acepta una solicitud de revisión, con la invitación de calendario de la revisión adjunta."
 
 msgid "emails.reviewReminder.subject"
 msgstr "Recordatorio de Revisión"
@@ -26,7 +26,7 @@ msgid "emails.pendingReviewsReminder.description"
 msgstr "Modelo de correo electrónico utilizado para notificar a los revisores con una lista de revisiones pendientes"
 
 msgid "emails.pendingReviewsReminder.subject"
-msgstr "Recordatorio de Revisiones Pendientes"
+msgstr "Recordatorio de Revisiones Pendientes - {$journalName}"
 
 msgid "emails.pendingReviewsReminder.body"
 msgstr ""

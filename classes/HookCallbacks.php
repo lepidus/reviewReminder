@@ -5,10 +5,18 @@ namespace APP\plugins\generic\reviewReminder\classes;
 use PKP\db\DAORegistry;
 use APP\core\Application;
 use APP\plugins\generic\reviewReminder\classes\ReviewReminderService;
-use PKP\security\AccessKeyManager;
+use PKP\plugins\Hook;
 
 class HookCallbacks
 {
+    private $reviewBeingAccepted = null;
+
+    public function rememberReviewBeingAccepted($hookName, $args)
+    {
+        $this->reviewBeingAccepted = $args[0]->getReviewAssignment();
+        return Hook::CONTINUE;
+    }
+
     public function sendReviewReminder($hookName, $args)
     {
         $reviewerDeclined = $args[3];
@@ -29,20 +37,11 @@ class HookCallbacks
         $request = Application::get()->getRequest();
         $context = $request->getContext();
 
-        $oneClickReviewerUrl = $this->getOneClickReviewerUrl(
-            $context,
-            $reviewer->getId(),
-            $reviewAssignment->getId(),
-            $reviewAssignment->getSubmissionId(),
-            $request
-        );
-
         $reviewReminderService = new ReviewReminderService(
             $context,
             $reviewAssignment,
             $reviewer,
-            $reviewDueDate,
-            $oneClickReviewerUrl
+            $reviewDueDate
         );
 
         $reviewReminderService->sendReviewReminder();
@@ -50,27 +49,17 @@ class HookCallbacks
 
     private function getReviewAssignment($submissionId, $reviewerId)
     {
-        $reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
-        return $reviewAssignmentDao->getLastReviewRoundReviewAssignmentByReviewer($submissionId, $reviewerId);
-    }
-
-    private function getOneClickReviewerUrl($context, $reviewerId, $reviewAssignmentId, $submissionId, $request)
-    {
-        $reviewerAccessKeysEnabled = $context->getData('reviewerAccessKeysEnabled');
-        if (!$reviewerAccessKeysEnabled) {
-            return null;
+        $reviewBeingAccepted = $this->reviewBeingAccepted;
+        $this->reviewBeingAccepted = null;
+        if (
+            $reviewBeingAccepted
+            && $reviewBeingAccepted->getSubmissionId() == $submissionId
+            && $reviewBeingAccepted->getReviewerId() == $reviewerId
+        ) {
+            return $reviewBeingAccepted;
         }
 
-        $accessKeyManager = new AccessKeyManager();
-        $keyLifetime = ($context->getData('numWeeksPerReview') + 4) * 7;
-        $accessKey = $accessKeyManager->createKey($context->getId(), $reviewerId, $reviewAssignmentId, $keyLifetime);
-
-        $reviewUrlArgs = [
-            'submissionId' => $submissionId,
-            'reviewId' => $reviewAssignmentId,
-            'key' => $accessKey
-        ];
-
-        return Application::get()->getDispatcher()->url($request, Application::ROUTE_PAGE, $context->getPath(), 'reviewer', 'submission', null, $reviewUrlArgs);
+        $reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
+        return $reviewAssignmentDao->getLastReviewRoundReviewAssignmentByReviewer($submissionId, $reviewerId);
     }
 }

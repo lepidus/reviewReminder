@@ -4,6 +4,8 @@ namespace APP\plugins\generic\reviewReminder\classes;
 
 use APP\facades\Repo;
 use APP\core\Application;
+use Carbon\Carbon;
+use PKP\config\Config;
 use Illuminate\Support\Facades\Mail;
 use APP\plugins\generic\reviewReminder\classes\mail\mailables\ReviewReminder;
 use APP\plugins\generic\reviewReminder\lib\ICS;
@@ -17,18 +19,16 @@ class ReviewReminderService
     private $reviewAssignment;
     private $reviewer;
     private $reviewDueDate;
-    private $oneClickReviewerUrl;
 
     private const EMAIL_TEMPLATE_KEY = 'REVIEW_REMINDER';
 
-    public function __construct($context, $reviewAssignment, $reviewer, $reviewDueDate, $oneClickReviewerUrl)
+    public function __construct($context, $reviewAssignment, $reviewer, $reviewDueDate)
     {
         $this->context = $context;
         $this->submission = Repo::submission()->get((int) $reviewAssignment->getSubmissionId());
         $this->reviewAssignment = $reviewAssignment;
         $this->reviewer = $reviewer;
         $this->reviewDueDate = $reviewDueDate;
-        $this->oneClickReviewerUrl = $oneClickReviewerUrl;
     }
 
     public function sendReviewReminder()
@@ -55,7 +55,7 @@ class ReviewReminderService
 
     private function createICalendarContents()
     {
-        $submissionTitle = $this->escapeICalendarTitle($this->submission->getLocalizedTitle());
+        $submissionTitle = $this->submission->getLocalizedTitle();
         $reviewDueDate = new \DateTimeImmutable($this->reviewDueDate);
 
         $ics = new ICS(array(
@@ -63,7 +63,7 @@ class ReviewReminderService
                 'plugins.generic.reviewReminder.ics.description',
                 [
                     'submissionTitle' => $submissionTitle,
-                    'submissionReviewUrl' => $this->oneClickReviewerUrl ?? $this->getReviewUrl()
+                    'submissionReviewUrl' => $this->getReviewUrl()
                 ]
             ),
             'dtstart' => $reviewDueDate->format('Y-m-d'),
@@ -75,19 +75,20 @@ class ReviewReminderService
                     'journalName' => $this->context->getLocalizedName()
                 ]
             ),
-            'organizer' => $this->context->getLocalizedName() . ':mailto:' . $this->context->getData('contactEmail'),
+            'uid' => 'review-assignment-' . $this->reviewAssignment->getId() . '@' . $this->getHost(),
+            'sequence' => Carbon::now()->getTimestamp(),
+            'organizer' => [
+                'name' => $this->context->getLocalizedName(),
+                'email' => $this->context->getData('contactEmail'),
+            ],
         ));
 
         return ReminderFile::contents($ics);
     }
 
-    private function escapeICalendarTitle(string $title): string
+    private function getHost(): string
     {
-        return str_replace(
-            ['\\', "\r\n", "\r", "\n"],
-            ['\\\\', '\\n', '\\n', '\\n'],
-            $title
-        );
+        return parse_url(Config::getVar('general', 'base_url'), PHP_URL_HOST) ?: 'localhost';
     }
 
     private function getReviewUrl()

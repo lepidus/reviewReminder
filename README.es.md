@@ -13,9 +13,9 @@ Este README describe la versión para **OJS 3.4.0.x**. El plugin envía dos corr
 | Recordatorio de revisión | Cuando el revisor acepta una solicitud de revisión | Plazo de la revisión, enlace a la revisión y un archivo de calendario `invite.ics` |
 | Recordatorio semanal | Lunes, a través del plugin Acron | Un correo por revista con las revisiones pendientes |
 
-Ambos correos se habilitan, por revista, al activar el plugin. El recordatorio semanal puede desactivarse en los **Ajustes** del plugin, en **Sitio web > Plugins > Plugins instalados**, sin afectar el recordatorio enviado al aceptar. El día del recordatorio semanal no se puede cambiar.
+Ambos correos se habilitan, por revista, al activar el plugin. El recordatorio semanal puede desactivarse en **Flujo de trabajo > Revisión > Configuración**, al final del formulario, sin afectar el recordatorio enviado al aceptar. La opción aparece mientras el plugin está activado. El día del recordatorio semanal no se puede cambiar.
 
-Ambos correos tienen como remitente al contacto principal de la revista. El recordatorio enviado al aceptar usa el idioma en que el revisor está usando OJS, y el recordatorio semanal usa el idioma principal de la revista. Los textos vienen del plugin y no aparecen en las plantillas de correo de la revista, por lo que no se pueden editar allí. Cada envío se registra en el *Registro de actividad* del envío y aparece en el *Historial* de la revisión, en un bloque separado de los recordatorios de OJS.
+Ambos correos tienen como remitente al contacto principal de la revista. El recordatorio enviado al aceptar usa el idioma en que el revisor está usando OJS, y el recordatorio semanal usa el idioma principal de la revista. La revista puede editar y traducir ambos correos en **Flujo de trabajo > Correos electrónicos**, plantillas *Recordatorio de Aceptación de la Revisión* y *Recordatorio de Revisiones Pendientes*. Cada envío se registra en el *Registro de actividad* del envío y aparece en el *Historial* de la revisión, en un bloque separado de los recordatorios de OJS.
 
 ## Recordatorio de revisión
 
@@ -31,13 +31,13 @@ Ejemplo del correo enviado cuando el revisor acepta la solicitud:
 >
 > También puede utilizar el recordatorio adjunto para añadir este evento al calendario que prefiera.
 
-El archivo `invite.ics` contiene un evento titulado "Plazo de revisión: <título del envío> (<nombre de la revista>)", que ocupa todo el día del **plazo para completar la revisión**. La descripción del evento enlaza a la revisión. Cuando el **Acceso del revisor con un clic** está habilitado, ese enlace abre la revisión sin iniciar sesión. El plugin no define alarmas ni actualiza el evento si el plazo cambia.
+El archivo `invite.ics` contiene un evento titulado "Plazo de revisión: <título del envío> (<nombre de la revista>)", que ocupa todo el día del **plazo para completar la revisión**. La descripción del evento enlaza a la revisión. El enlace pide al revisor iniciar sesión incluso con el **Acceso del revisor con un clic** habilitado, porque los eventos de calendario suelen sincronizarse y compartirse. El plugin no define alarmas ni actualiza el evento si el plazo cambia.
 
 ## Recordatorio semanal
 
 Ejemplo del correo semanal:
 
-> **Asunto:** Recordatorio de Revisiones Pendientes
+> **Asunto:** Recordatorio de Revisiones Pendientes - Revista de Ejemplo
 >
 > Estimado/a Maria Silva,
 >
@@ -67,10 +67,6 @@ Si el servidor ejecuta las tareas programadas por cron en lugar de Acron, incluy
 ## Instalación
 
 Instale **Review Reminder** desde la Galería de plugins en **Sitio web > Plugins**, o descargue el paquete `.tar.gz` para OJS 3.4 en la [página de versiones](https://github.com/lepidus/reviewReminder/releases) y cárguelo con **Subir un nuevo plugin**. Después, actívelo en cada revista que lo necesite y compruebe que OJS envía correos.
-
-Opcionalmente, habilite el **Acceso del revisor con un clic** en **Flujo de trabajo > Revisión > Configuración**.
-
-![Cómo habilitar el acceso del revisor con un clic](https://i.imgur.com/cHjoXsI.gif)
 
 Al desactivar el plugin en una revista, ambos correos dejan de enviarse para ella. Las revisiones, los plazos y los eventos ya importados no se modifican.
 

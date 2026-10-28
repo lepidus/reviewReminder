@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Mail;
 use APP\plugins\generic\reviewReminder\classes\ReviewReminderDAO;
 use APP\plugins\generic\reviewReminder\classes\PendingReviewsEmailBuilder;
 use APP\plugins\generic\reviewReminder\classes\ReminderActivityLog;
+use APP\plugins\generic\reviewReminder\classes\PendingReviewsReminderSetting;
 use APP\plugins\generic\reviewReminder\ReviewReminderPlugin;
 
 class SendPendingReviewsReminder extends ScheduledTask
@@ -23,7 +24,7 @@ class SendPendingReviewsReminder extends ScheduledTask
         $reminderActivityLog = new ReminderActivityLog();
 
         while ($context = $contexts->next()) {
-            if (!$plugin->getEnabled($context->getId()) || !$plugin->isPendingReviewsReminderEnabled($context->getId())) {
+            if (!$plugin->getEnabled($context->getId()) || !PendingReviewsReminderSetting::isEnabled($context->getId())) {
                 continue;
             }
 
